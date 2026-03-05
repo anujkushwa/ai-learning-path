@@ -1,5 +1,5 @@
 import { db } from "@/lib/db";
-import { teacherTopics } from "@/lib/schema";
+import { teacherTopics } from "@/db/schema";
 import { NextResponse } from "next/server";
 
 export async function GET() {
