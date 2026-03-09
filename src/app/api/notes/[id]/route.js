@@ -1,9 +1,10 @@
 import { pool } from "@/lib/db";
 import { NextResponse } from "next/server";
 
-export async function GET(request, { params }) {
+export async function GET(request, context) {
   try {
-    const id = params.id;   // ✅ direct access
+    const { params } = context;
+    const id = params?.id;
 
     const result = await pool.query(
       "SELECT * FROM notes WHERE id = $1",
@@ -20,6 +21,7 @@ export async function GET(request, { params }) {
     return NextResponse.json(result.rows[0]);
   } catch (error) {
     console.error("NOTE FETCH ERROR:", error);
+
     return NextResponse.json(
       { error: error.message },
       { status: 500 }
