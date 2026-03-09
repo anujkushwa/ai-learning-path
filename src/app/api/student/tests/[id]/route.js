@@ -15,7 +15,8 @@ export async function GET(request, { params }) {
       );
     }
 
-    const testId = params.id;
+    /* FIX FOR NEXTJS 15 */
+    const { id: testId } = await params;
 
     /* ---------- GET STUDENT INFO ---------- */
 

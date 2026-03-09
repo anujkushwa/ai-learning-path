@@ -54,7 +54,7 @@ export default function SelectRole() {
   const handleStudent = async () => {
 
     if (!course || !institution) {
-      setError("Please select institution and course");
+      setError("Please enter institution and course");
       return;
     }
 
@@ -96,7 +96,7 @@ export default function SelectRole() {
     const VALID_TEACHER_CODE = "TEACH123";
 
     if (!course || !institution) {
-      setError("Please select institution and course");
+      setError("Please enter institution and course");
       return;
     }
 
@@ -165,7 +165,7 @@ export default function SelectRole() {
           Select how you want to continue
         </p>
 
-        {/* Institution input with suggestion */}
+        {/* Institution input */}
 
         <input
           list="institutions"
@@ -182,18 +182,15 @@ export default function SelectRole() {
           <option value="BHU" />
         </datalist>
 
-        {/* Course */}
+        {/* Course input instead of dropdown */}
 
-        <select
+        <input
+          type="text"
           value={course}
           onChange={(e) => setCourse(e.target.value)}
+          placeholder="Enter Course (Example: B.Tech, BCA, MCA)"
           className="w-full mb-6 px-4 py-3 rounded-xl bg-white/80 text-gray-900"
-        >
-          <option value="">Select Course</option>
-          <option value="BCA">BCA</option>
-          <option value="MCA">MCA</option>
-          <option value="BTECH">B.Tech</option>
-        </select>
+        />
 
         {!showTeacherInput ? (
 

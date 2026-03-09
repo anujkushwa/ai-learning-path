@@ -11,9 +11,15 @@ export default function StudentNotesPage() {
   const [notes, setNotes] = useState([]);
 
   useEffect(() => {
-    fetch("/api/notes")
+
+    // later login system se studentId ayega
+    const studentId = 1;
+
+    fetch(`/api/notes?studentId=${studentId}`)
       .then(res => res.json())
-      .then(data => setNotes(data));
+      .then(data => setNotes(data))
+      .catch(err => console.error("NOTES FETCH ERROR:", err));
+
   }, []);
 
   return (

@@ -1,15 +1,53 @@
-import { NextResponse } from "next/server";
 import { pool } from "@/lib/db";
+import { NextResponse } from "next/server";
 
-export async function GET() {
+export async function GET(req, { params }) {
   try {
-    const result = await pool.query(
-      "SELECT * FROM notes ORDER BY created_at DESC"
+
+    const id = params.id;
+    const studentId = req.nextUrl.searchParams.get("studentId");
+
+    if (!studentId) {
+      return NextResponse.json(
+        { error: "Student ID required" },
+        { status: 400 }
+      );
+    }
+
+    // get student info
+    const studentResult = await pool.query(
+      "SELECT institute_id, course FROM students WHERE id=$1",
+      [studentId]
     );
 
-    return NextResponse.json(result.rows);
+    if (studentResult.rows.length === 0) {
+      return NextResponse.json(
+        { error: "Student not found" },
+        { status: 404 }
+      );
+    }
+
+    const { institute_id, course } = studentResult.rows[0];
+
+    // get note only if institute + course match
+    const noteResult = await pool.query(
+      "SELECT * FROM notes WHERE id=$1 AND institute_id=$2 AND course=$3",
+      [id, institute_id, course]
+    );
+
+    if (noteResult.rows.length === 0) {
+      return NextResponse.json(
+        { error: "Note not found or access denied" },
+        { status: 404 }
+      );
+    }
+
+    return NextResponse.json(noteResult.rows[0]);
+
   } catch (error) {
-    console.error("NOTES API ERROR:", error);
+
+    console.error("NOTE FETCH ERROR:", error);
+
     return NextResponse.json(
       { error: error.message },
       { status: 500 }

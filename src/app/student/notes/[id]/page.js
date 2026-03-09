@@ -1,6 +1,6 @@
 "use client";
 
-import { useParams } from "next/navigation";
+import { useParams, useSearchParams } from "next/navigation";
 import { useEffect, useState } from "react";
 import StudentNavbar from "@/components/StudentNavbar";
 import StudentFooter from "@/components/StudentFooter";
@@ -9,7 +9,10 @@ import { Download } from "lucide-react";
 export default function NoteDetail() {
 
   const params = useParams();
+  const searchParams = useSearchParams();
+
   const id = params?.id;
+  const studentId = searchParams.get("studentId") || 1;
 
   const [note, setNote] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -18,7 +21,7 @@ export default function NoteDetail() {
 
     if (!id) return;
 
-    fetch(`/api/notes/${id}`)
+    fetch(`/api/notes/${id}?studentId=${studentId}`)
       .then(res => {
         if (!res.ok) throw new Error("Failed to load note");
         return res.json();
@@ -32,12 +35,12 @@ export default function NoteDetail() {
         setLoading(false);
       });
 
-  }, [id]);
+  }, [id, studentId]);
 
   if (loading) {
     return (
-      <div className="pt-24 text-center">
-        Loading...
+      <div className="pt-24 text-center text-lg">
+        Loading note...
       </div>
     );
   }
@@ -65,14 +68,13 @@ export default function NoteDetail() {
             {note.description}
           </p>
 
-          {/* ✅ PDF PREVIEW */}
+          {/* PDF Preview */}
           <iframe
             src={`${encodeURI(note.file_url)}#toolbar=0`}
-            type="application/pdf"
             className="w-full h-[500px] border rounded-lg mb-6"
           />
 
-          {/* ✅ DOWNLOAD */}
+          {/* Download */}
           <a
             href={encodeURI(note.file_url)}
             download

@@ -1,32 +1,65 @@
 import { NextResponse } from "next/server";
-import { writeFile } from "fs/promises";
+import pool from "@/lib/db";
+import fs from "fs";
 import path from "path";
-import { pool } from "@/lib/db";
 
 export async function POST(req) {
+  try {
 
-  const formData = await req.formData();
+    const formData = await req.formData();
 
-  const title = formData.get("title");
-  const description = formData.get("description");
-  const file = formData.get("file");
+    const title = formData.get("title");
+    const description = formData.get("description");
+    const file = formData.get("file");
 
-  const bytes = await file.arrayBuffer();
-  const buffer = Buffer.from(bytes);
+    if (!title || !description || !file) {
+      return NextResponse.json(
+        { error: "All fields required" },
+        { status: 400 }
+      );
+    }
 
-  const fileName = Date.now() + "-" + file.name;
+    const bytes = await file.arrayBuffer();
+    const buffer = Buffer.from(bytes);
 
-  const uploadDir = path.join(process.cwd(), "public/uploads");
-  const uploadPath = path.join(uploadDir, fileName);
+    const fileName = Date.now() + "-" + file.name;
 
-  await writeFile(uploadPath, buffer);
+    const uploadPath = path.join(
+      process.cwd(),
+      "public/uploads",
+      fileName
+    );
 
-  const fileUrl = `/uploads/${fileName}`;
+    fs.writeFileSync(uploadPath, buffer);
 
-  await pool.query(
-    "INSERT INTO notes(title,description,file_url,file_type) VALUES($1,$2,$3,$4)",
-    [title, description, fileUrl, file.type]
-  );
+    const fileUrl = `/uploads/${fileName}`;
 
-  return NextResponse.json({ success: true });
+    const institute_id = 1;
+    const course = "MCA";
+
+    await pool.query(
+      `INSERT INTO notes
+      (title, description, file_url, file_type, institute_id, course)
+      VALUES ($1,$2,$3,$4,$5,$6)`,
+      [
+        title,
+        description,
+        fileUrl,
+        file.type,
+        institute_id,
+        course
+      ]
+    );
+
+    return NextResponse.json({ success: true });
+
+  } catch (error) {
+
+    console.error("UPLOAD ERROR:", error);
+
+    return NextResponse.json(
+      { error: error.message },
+      { status: 500 }
+    );
+  }
 }

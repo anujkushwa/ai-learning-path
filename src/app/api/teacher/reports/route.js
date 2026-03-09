@@ -60,7 +60,7 @@ export async function GET() {
         s.name,
         t.topic,
         r.score
-      FROM results r
+      FROM test_results r
       JOIN students s ON s.clerk_id = r.student_clerk_id
       JOIN tests t ON t.id = r.test_id
       WHERE s.institution = $1
