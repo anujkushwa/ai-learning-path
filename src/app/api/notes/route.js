@@ -1,10 +1,11 @@
-import { pool } from "@/lib/db";
 import { NextResponse } from "next/server";
+import { pool } from "@/lib/db";
 
-export async function GET(req, { params }) {
+export async function GET(req, context) {
   try {
+    const { params } = context;
+    const id = params?.id;
 
-    const id = params.id;
     const studentId = req.nextUrl.searchParams.get("studentId");
 
     if (!studentId) {
