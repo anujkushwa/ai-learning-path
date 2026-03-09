@@ -3,7 +3,7 @@ import {
   serial,
   text,
   integer,
-  timestamp,
+  timestamp
 } from "drizzle-orm/pg-core";
 
 /* STUDENTS */
@@ -22,14 +22,13 @@ export const tests = pgTable("tests", {
 /* RESULTS */
 export const results = pgTable("results", {
   id: serial("id").primaryKey(),
-
   studentId: integer("student_id")
-    .notNull()
-    .references(() => students.id),
+    .references(() => students.id)
+    .notNull(),
 
   testId: integer("test_id")
-    .notNull()
-    .references(() => tests.id),
+    .references(() => tests.id)
+    .notNull(),
 
   score: integer("score").notNull(),
 });
