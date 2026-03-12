@@ -1,56 +1,45 @@
 import { NextResponse } from "next/server";
+import { currentUser } from "@clerk/nextjs/server";
 import { pool } from "@/lib/db";
 
-export async function GET(req, context) {
+export async function GET() {
   try {
-    const { params } = context;
-    const id = params?.id;
 
-    const studentId = req.nextUrl.searchParams.get("studentId");
+    const user = await currentUser();
 
-    if (!studentId) {
-      return NextResponse.json(
-        { error: "Student ID required" },
-        { status: 400 }
-      );
+    if (!user) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    // get student info
-    const studentResult = await pool.query(
-      "SELECT institute_id, course FROM students WHERE id=$1",
-      [studentId]
+    const studentRes = await pool.query(
+      `SELECT institute_id, course
+       FROM students
+       WHERE clerk_id = $1`,
+      [user.id]
     );
 
-    if (studentResult.rows.length === 0) {
-      return NextResponse.json(
-        { error: "Student not found" },
-        { status: 404 }
-      );
+    if (studentRes.rows.length === 0) {
+      return NextResponse.json([]);
     }
 
-    const { institute_id, course } = studentResult.rows[0];
+    const { institute_id, course } = studentRes.rows[0];
 
-    // get note only if institute + course match
-    const noteResult = await pool.query(
-      "SELECT * FROM notes WHERE id=$1 AND institute_id=$2 AND course=$3",
-      [id, institute_id, course]
+    const notesRes = await pool.query(
+      `SELECT id, title, description, file_url, file_type
+       FROM notes
+       WHERE institute_id = $1
+       AND course = $2
+       ORDER BY created_at DESC`,
+      [institute_id, course]
     );
 
-    if (noteResult.rows.length === 0) {
-      return NextResponse.json(
-        { error: "Note not found or access denied" },
-        { status: 404 }
-      );
-    }
-
-    return NextResponse.json(noteResult.rows[0]);
+    return NextResponse.json(notesRes.rows);
 
   } catch (error) {
-
-    console.error("NOTE FETCH ERROR:", error);
+    console.error(error);
 
     return NextResponse.json(
-      { error: error.message },
+      { error: "Server error" },
       { status: 500 }
     );
   }

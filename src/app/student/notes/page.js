@@ -12,13 +12,26 @@ export default function StudentNotesPage() {
 
   useEffect(() => {
 
-    // later login system se studentId ayega
     const studentId = 1;
 
     fetch(`/api/notes?studentId=${studentId}`)
       .then(res => res.json())
-      .then(data => setNotes(data))
-      .catch(err => console.error("NOTES FETCH ERROR:", err));
+      .then(data => {
+
+        // ensure notes is always an array
+        if (Array.isArray(data)) {
+          setNotes(data);
+        } else if (Array.isArray(data.notes)) {
+          setNotes(data.notes);
+        } else {
+          setNotes([]);
+        }
+
+      })
+      .catch(err => {
+        console.error("NOTES FETCH ERROR:", err);
+        setNotes([]);
+      });
 
   }, []);
 
@@ -34,6 +47,10 @@ export default function StudentNotesPage() {
           </h1>
 
           <div className="grid sm:grid-cols-2 md:grid-cols-3 gap-6">
+
+            {notes.length === 0 && (
+              <p className="text-gray-500">No notes available</p>
+            )}
 
             {notes.map((n) => (
               <Link

@@ -1,29 +1,63 @@
-import { pool } from "@/lib/db";
 import { NextResponse } from "next/server";
+import { currentUser } from "@clerk/nextjs/server";
+import { pool } from "@/lib/db";
 
-export async function GET(request, context) {
+export async function GET(req, { params }) {
   try {
-    const { params } = context;
-    const id = params?.id;
 
-    const result = await pool.query(
-      "SELECT * FROM notes WHERE id = $1",
-      [id]
+    const user = await currentUser();
+
+    if (!user) {
+      return NextResponse.json(
+        { error: "Unauthorized" },
+        { status: 401 }
+      );
+    }
+
+    const noteId = params.id;
+
+    // student info
+    const studentRes = await pool.query(
+      `SELECT institute_id, course
+       FROM students
+       WHERE clerk_id = $1`,
+      [user.id]
     );
 
-    if (result.rows.length === 0) {
+    if (studentRes.rows.length === 0) {
       return NextResponse.json(
-        { error: "Note not found" },
+        { error: "Student not found" },
         { status: 404 }
       );
     }
 
-    return NextResponse.json(result.rows[0]);
+    const { institute_id, course } = studentRes.rows[0];
+
+    // secure note fetch
+    const noteRes = await pool.query(
+      `SELECT *
+       FROM notes
+       WHERE id = $1
+       AND institute_id = $2
+       AND course = $3`,
+      [noteId, institute_id, course]
+    );
+
+    if (noteRes.rows.length === 0) {
+      return NextResponse.json(
+        { error: "Access denied" },
+        { status: 403 }
+      );
+    }
+
+    return NextResponse.json(noteRes.rows[0]);
+
   } catch (error) {
-    console.error("NOTE FETCH ERROR:", error);
+
+    console.error("NOTE ERROR:", error);
 
     return NextResponse.json(
-      { error: error.message },
+      { error: "Server error" },
       { status: 500 }
     );
   }
