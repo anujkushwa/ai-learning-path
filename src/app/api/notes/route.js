@@ -1,10 +1,9 @@
 import { NextResponse } from "next/server";
 import { currentUser } from "@clerk/nextjs/server";
-import { pool } from "@/lib/db";
+import { pool } from "@/lib/db"; // ✅ fixed
 
 export async function GET() {
   try {
-
     const user = await currentUser();
 
     if (!user) {

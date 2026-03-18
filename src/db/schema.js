@@ -42,3 +42,8 @@ export const notes = pgTable("notes", {
   fileType: text("file_type").notNull(),
   createdAt: timestamp("created_at").defaultNow(),
 });
+export const testAssignments = pgTable("test_assignments", {
+  id: serial("id").primaryKey(),
+  testId: integer("test_id"),
+  studentId: integer("student_id"),
+});
