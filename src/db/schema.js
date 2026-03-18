@@ -25,11 +25,9 @@ export const results = pgTable("results", {
   studentId: integer("student_id")
     .references(() => students.id)
     .notNull(),
-
   testId: integer("test_id")
     .references(() => tests.id)
     .notNull(),
-
   score: integer("score").notNull(),
 });
 
@@ -42,6 +40,8 @@ export const notes = pgTable("notes", {
   fileType: text("file_type").notNull(),
   createdAt: timestamp("created_at").defaultNow(),
 });
+
+/* TEST ASSIGNMENTS */
 export const testAssignments = pgTable("test_assignments", {
   id: serial("id").primaryKey(),
   testId: integer("test_id"),
