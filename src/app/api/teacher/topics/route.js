@@ -1,4 +1,4 @@
-import { db } from "@/lib/db";
+import { db } from "@/db";
 import { teacherTopics } from "@/db/schema";
 import { NextResponse } from "next/server";
 
