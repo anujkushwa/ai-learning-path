@@ -42,8 +42,18 @@ export const notes = pgTable("notes", {
 });
 
 /* TEST ASSIGNMENTS */
+/* TEST ASSIGNMENTS */
 export const testAssignments = pgTable("test_assignments", {
   id: serial("id").primaryKey(),
   testId: integer("test_id"),
   studentId: integer("student_id"),
+});
+
+/* TEACHER TOPICS */
+export const teacherTopics = pgTable("teacher_topics", {
+  id: serial("id").primaryKey(),
+  title: text("title").notNull(),
+  description: text("description"),
+  teacherId: text("teacher_id"),
+  createdAt: timestamp("created_at").defaultNow(),
 });
