@@ -74,41 +74,47 @@ export default function Page() {
         </div>
 
         {/* RIGHT: SIGN IN */}
-        <div className="flex justify-center">
-          <div className="w-full max-w-sm sm:max-w-md rounded-2xl border border-white/15 bg-white/10 p-5 sm:p-8 shadow-2xl backdrop-blur-xl">
-            
-            <div className="mb-4 sm:mb-6 text-center text-white">
-              <h3 className="text-xl sm:text-2xl font-semibold">
-                Welcome back
-              </h3>
-              <p className="mt-1 text-xs sm:text-sm text-slate-400">
-                Continue your learning journey
-              </p>
-            </div>
+        <div className="flex justify-center w-full px-2 sm:px-0">
+  <div className="w-full max-w-[360px] sm:max-w-md rounded-2xl border border-white/15 bg-white/10 p-4 sm:p-6 md:p-8 shadow-2xl backdrop-blur-xl overflow-hidden">
+    
+    <div className="mb-4 sm:mb-6 text-center text-white">
+      <h3 className="text-lg sm:text-xl md:text-2xl font-semibold">
+        Welcome back
+      </h3>
+      <p className="mt-1 text-xs sm:text-sm text-slate-400">
+        Continue your learning journey
+      </p>
+    </div>
 
-            <SignIn
-              routing="path"
-              path="/sign-in"
-              signUpUrl="/sign-up"
-              afterSignInUrl="/select-role"
-              afterSignUpUrl="/select-role"
-              appearance={{
-                elements: {
-                  card: "bg-transparent shadow-none",
-                  headerTitle: "hidden",
-                  headerSubtitle: "hidden",
-                  socialButtonsBlockButton:
-                    "bg-white/90 hover:bg-white text-black",
-                  formButtonPrimary:
-                    "bg-gradient-to-r from-indigo-500 to-cyan-500 hover:opacity-90 text-sm",
-                  footerActionText: "text-slate-400",
-                  footerActionLink:
-                    "text-cyan-400 hover:text-cyan-300",
-                },
-              }}
-            />
-          </div>
-        </div>
+    {/* Important wrapper */}
+    <div className="w-full overflow-x-auto">
+      <div className="min-w-[300px]">
+        <SignIn
+          routing="path"
+          path="/sign-in"
+          signUpUrl="/sign-up"
+          afterSignInUrl="/select-role"
+          afterSignUpUrl="/select-role"
+          appearance={{
+            elements: {
+              card: "bg-transparent shadow-none w-full",
+              rootBox: "w-full",
+              form: "w-full",
+              socialButtonsBlockButton:
+                "bg-white/90 hover:bg-white text-black text-sm",
+              formButtonPrimary:
+                "bg-gradient-to-r from-indigo-500 to-cyan-500 hover:opacity-90 text-sm",
+              footerActionText: "text-slate-400 text-xs",
+              footerActionLink:
+                "text-cyan-400 hover:text-cyan-300 text-xs",
+            },
+          }}
+        />
+      </div>
+    </div>
+
+  </div>
+</div>
       </div>
     </div>
   );
