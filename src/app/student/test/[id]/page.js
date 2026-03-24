@@ -13,8 +13,9 @@ export default function TakeTest() {
   const [current, setCurrent] = useState(0);
   const [selected, setSelected] = useState({});
   const [loading, setLoading] = useState(true);
+  const [submitted, setSubmitted] = useState(false);
 
-  // ⏳ TIMER (15 minutes default)
+  // ⏳ TIMER
   const [timeLeft, setTimeLeft] = useState(15 * 60);
 
   /* ---------------- LOAD TEST ---------------- */
@@ -31,7 +32,7 @@ export default function TakeTest() {
       });
   }, [id]);
 
-  /* ---------------- TIMER LOGIC ---------------- */
+  /* ---------------- TIMER ---------------- */
   useEffect(() => {
     if (!test) return;
 
@@ -54,10 +55,12 @@ export default function TakeTest() {
     return `${mins}:${secs < 10 ? "0" : ""}${secs}`;
   };
 
-  /* ---------------- SUBMIT TEST ---------------- */
+  /* ---------------- SUBMIT TEST (FIXED 🔥) ---------------- */
   async function submitTest() {
 
-    if (!test) return;
+    if (!test || submitted) return;
+
+    setSubmitted(true);
 
     let score = 0;
 
@@ -71,22 +74,34 @@ export default function TakeTest() {
       (score / test.questions.length) * 100
     );
 
-    await fetch("/api/tests/submit", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        userId: "student1",
-        testId: id,
-        topic: test.topic,
-        score: finalScore,
-        total: test.questions.length,
-      }),
-    });
+    try {
+      const res = await fetch("/api/tests/submit", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          testId: Number(id),       // ✅ FIXED
+          topic: test.topic,        // ✅ FIXED
+          score: finalScore,        // ✅ FIXED
+        }),
+      });
 
-    alert(`Test submitted! Your score: ${finalScore}%`);
-    router.push("/student/dashboard");
+      const data = await res.json();
+      console.log("Submit response:", data);
+
+      alert(`Test submitted! Your score: ${finalScore}%`);
+
+      router.push("/student/dashboard");
+
+    } catch (err) {
+      console.error("Submit error:", err);
+      alert("Failed to submit test ❌");
+      setSubmitted(false);
+    }
   }
 
+  /* ---------------- LOADING ---------------- */
   if (loading) {
     return (
       <>
@@ -96,6 +111,7 @@ export default function TakeTest() {
     );
   }
 
+  /* ---------------- EMPTY ---------------- */
   if (!test || !test.questions || test.questions.length === 0) {
     return (
       <>
@@ -129,13 +145,15 @@ export default function TakeTest() {
             </div>
 
             <div className={`px-4 py-2 rounded-lg font-semibold 
-              ${timeLeft < 60 ? "bg-red-100 text-red-600" : "bg-indigo-100 text-indigo-600"}`}>
+              ${timeLeft < 60
+                ? "bg-red-100 text-red-600"
+                : "bg-indigo-100 text-indigo-600"}`}>
               ⏳ {formatTime(timeLeft)}
             </div>
 
           </div>
 
-          {/* PROGRESS BAR */}
+          {/* PROGRESS */}
           <div className="w-full bg-gray-200 rounded-full h-2 mb-6">
             <div
               className="bg-indigo-600 h-2 rounded-full transition-all"
