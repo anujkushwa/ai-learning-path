@@ -21,6 +21,8 @@ export async function GET() {
       return NextResponse.json({ error: "Teacher not found" }, { status: 404 });
     }
 
+    console.log("Teacher:", teacher);
+
     const result = await pool.query(
       `
       SELECT 
@@ -28,15 +30,14 @@ export async function GET() {
         ROUND(COALESCE(AVG(tr.score), 0)::numeric, 2) AS avg
       FROM test_results tr
       JOIN tests t ON tr.test_id = t.id
-
       WHERE t.institute_id = $1
-      AND LOWER(TRIM(t.course)) = LOWER(TRIM($2))
-
       GROUP BY tr.topic
       ORDER BY avg ASC
       `,
-      [teacher.institute_id, teacher.course]
+      [teacher.institute_id]
     );
+
+    console.log("RESULT:", result.rows);
 
     return NextResponse.json(result.rows || []);
 
