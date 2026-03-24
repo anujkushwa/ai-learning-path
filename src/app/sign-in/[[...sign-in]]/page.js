@@ -5,7 +5,6 @@ import { SignIn } from "@clerk/nextjs";
 export default function Page() {
   return (
     <div className="relative min-h-screen bg-[url('/auth-bg.jpg')] bg-cover bg-center">
-      
       {/* Dark overlay */}
       <div className="absolute inset-0 bg-gradient-to-br from-slate-950/90 via-slate-900/80 to-slate-950/95" />
 
@@ -21,7 +20,6 @@ export default function Page() {
 
       {/* Main Section */}
       <div className="relative z-10 mx-auto grid min-h-[calc(100vh-80px)] max-w-7xl grid-cols-1 md:grid-cols-2 items-center gap-10 md:gap-14 px-4 sm:px-6 md:px-8">
-
         {/* LEFT SECTION */}
         <div className="text-white text-center md:text-left">
           <h2 className="text-3xl sm:text-4xl md:text-5xl font-bold leading-tight">
@@ -75,46 +73,44 @@ export default function Page() {
 
         {/* RIGHT: SIGN IN */}
         <div className="flex justify-center w-full px-2 sm:px-0">
-  <div className="w-full max-w-[360px] sm:max-w-md rounded-2xl border border-white/15 bg-white/10 p-4 sm:p-6 md:p-8 shadow-2xl backdrop-blur-xl overflow-hidden">
-    
-    <div className="mb-4 sm:mb-6 text-center text-white">
-      <h3 className="text-lg sm:text-xl md:text-2xl font-semibold">
-        Welcome back
-      </h3>
-      <p className="mt-1 text-xs sm:text-sm text-slate-400">
-        Continue your learning journey
-      </p>
-    </div>
+          <div className="w-full max-w-[360px] sm:max-w-md rounded-2xl border border-white/15 bg-white/10 p-4 sm:p-6 md:p-8 shadow-2xl backdrop-blur-xl overflow-hidden">
+            <div className="mb-4 sm:mb-6 text-center text-white">
+              <h3 className="text-lg sm:text-xl md:text-2xl font-semibold">
+                Welcome back
+              </h3>
+              <p className="mt-1 text-xs sm:text-sm text-slate-400">
+                Continue your learning journey
+              </p>
+            </div>
 
-    {/* Important wrapper */}
-    <div className="w-full overflow-x-auto">
-      <div className="min-w-[300px]">
-        <SignIn
-          routing="path"
-          path="/sign-in"
-          signUpUrl="/sign-up"
-          afterSignInUrl="/select-role"
-          afterSignUpUrl="/select-role"
-          appearance={{
-            elements: {
-              card: "bg-transparent shadow-none w-full",
-              rootBox: "w-full",
-              form: "w-full",
-              socialButtonsBlockButton:
-                "bg-white/90 hover:bg-white text-black text-sm",
-              formButtonPrimary:
-                "bg-gradient-to-r from-indigo-500 to-cyan-500 hover:opacity-90 text-sm",
-              footerActionText: "text-slate-400 text-xs",
-              footerActionLink:
-                "text-cyan-400 hover:text-cyan-300 text-xs",
-            },
-          }}
-        />
-      </div>
-    </div>
-
-  </div>
-</div>
+            {/* Important wrapper */}
+            <div className="w-full overflow-x-auto">
+              <div className="min-w-[300px]">
+                <SignIn
+                  routing="path"
+                  path="/sign-in"
+                  signUpUrl="/sign-up"
+                  afterSignInUrl="/select-role"
+                  afterSignUpUrl="/select-role"
+                  appearance={{
+                    elements: {
+                      card: "bg-transparent shadow-none w-full",
+                      rootBox: "w-full",
+                      form: "w-full",
+                      socialButtonsBlockButton:
+                        "bg-white/90 hover:bg-white text-black text-sm",
+                      formButtonPrimary:
+                        "bg-gradient-to-r from-indigo-500 to-cyan-500 hover:opacity-90 text-sm",
+                      footerActionText: "text-slate-400 text-xs",
+                      footerActionLink:
+                        "text-cyan-400 hover:text-cyan-300 text-xs",
+                    },
+                  }}
+                />
+              </div>
+            </div>
+          </div>
+        </div>
       </div>
     </div>
   );

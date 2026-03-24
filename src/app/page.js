@@ -14,14 +14,15 @@ export default function Home() {
   <div className="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between">
 
     {/* LOGO */}
-    <div className="flex items-center gap-2">
-      <div className="w-9 h-9 rounded-lg bg-gradient-to-r from-indigo-500 to-purple-600 flex items-center justify-center text-white font-bold">
-        AI
-      </div>
-      <h1 className="text-xl font-extrabold bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent">
-         Learning Path
-      </h1>
-    </div>
+   <div className="flex items-center gap-2">
+  <div className="w-9 h-9 rounded-lg bg-[#557373]/90 backdrop-blur-md border border-white/10 flex items-center justify-center text-white font-bold shadow-lg">
+    AI
+  </div>
+
+  <h1 className="text-xl font-extrabold bg-gradient-to-r from-[#557373] via-[#6b8f8f] to-[#8fb3b3] bg-clip-text text-transparent">
+    Learning Path
+  </h1>
+</div>
 
     {/* NAV LINKS */}
     <div className="flex items-center gap-8">
@@ -56,10 +57,16 @@ export default function Home() {
     {/* LEFT CONTENT */}
     <div>
 
-     <h1
-  className="relative text-5xl font-extrabold leading-tight mb-6
-  bg-gradient-to-r from-black to-gray-800
-  bg-clip-text text-transparent"
+<h1
+  className="
+    relative 
+    text-2xl sm:text-3xl md:text-4xl lg:text-4xl 
+    font-extrabold leading-snug sm:leading-tight 
+    mb-4 sm:mb-6 
+    bg-gradient-to-r from-black to-gray-800 
+    bg-clip-text text-transparent
+    text-center md:text-left
+  "
 >
   AI-Based Learning Path Generator
 </h1>
@@ -75,7 +82,7 @@ export default function Home() {
 
         <div className="bg-white/70 backdrop-blur-xl p-5 rounded-2xl border border-white shadow-lg hover:shadow-xl transition">
           <h3 className="font-semibold text-lg mb-1">
-            🎯 Personalized Learning
+             Personalized Learning
           </h3>
           <p className="text-sm text-gray-600">
             Each student gets a custom learning path based on test performance.
@@ -84,7 +91,7 @@ export default function Home() {
 
         <div className="bg-white/70 backdrop-blur-xl p-5 rounded-2xl border border-white shadow-lg hover:shadow-xl transition">
           <h3 className="font-semibold text-lg mb-1">
-            📊 Performance Analytics
+             Performance Analytics
           </h3>
           <p className="text-sm text-gray-600">
             Teachers can track topic-wise progress using graphs and insights.
@@ -93,7 +100,7 @@ export default function Home() {
 
         <div className="bg-white/70 backdrop-blur-xl p-5 rounded-2xl border border-white shadow-lg hover:shadow-xl transition">
           <h3 className="font-semibold text-lg mb-1">
-            🤖 AI-Driven Feedback
+             AI-Driven Feedback
           </h3>
           <p className="text-sm text-gray-600">
             Smart feedback and weekly learning plans generated automatically.
@@ -103,15 +110,15 @@ export default function Home() {
       </div>
 
       {/* CTA */}
-      <a
-        href="/select-role"
-        className="inline-flex items-center gap-2 px-10 py-4
-        rounded-xl font-semibold text-white
-        bg-gradient-to-r from-indigo-600 to-purple-600
-        hover:scale-105 transition-transform shadow-lg shadow-indigo-300"
-      >
-        Continue →
-      </a>
+     <a
+  href="/select-role"
+  className="inline-flex items-center gap-2 px-10 py-4
+  rounded-xl font-semibold text-white
+  bg-[#557373]
+  hover:scale-105 transition-transform shadow-lg shadow-[#557373]/40"
+>
+  Continue →
+</a>
 
     </div>
 
