@@ -29,12 +29,12 @@ export async function GET() {
       );
     }
 
-    // 📊 Analytics query (FINAL FIX)
+    // 📊 FIXED ANALYTICS QUERY
     const result = await pool.query(
       `
       SELECT 
-        tr.topic,
-        ROUND(AVG(tr.score), 2) AS avg
+        COALESCE(tr.topic, 'Unknown') AS topic,
+        ROUND(COALESCE(AVG(tr.score), 0)::numeric, 2) AS avg
       FROM test_results tr
       JOIN tests t ON tr.test_id = t.id
       JOIN students s ON tr.student_id = s.id
@@ -48,7 +48,8 @@ export async function GET() {
       [teacher.institute_id, teacher.course]
     );
 
-    return NextResponse.json(result.rows);
+    // ✅ Always return array
+    return NextResponse.json(result.rows || []);
 
   } catch (error) {
     console.error("Analytics API Error:", error);

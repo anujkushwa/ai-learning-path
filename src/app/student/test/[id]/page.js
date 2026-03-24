@@ -15,21 +15,27 @@ export default function TakeTest() {
   const [loading, setLoading] = useState(true);
   const [submitted, setSubmitted] = useState(false);
 
-  // ⏳ TIMER
   const [timeLeft, setTimeLeft] = useState(15 * 60);
 
   /* ---------------- LOAD TEST ---------------- */
   useEffect(() => {
-    fetch(`/api/student/tests/${id}`)
-      .then(res => res.json())
-      .then(data => {
+    async function loadTest() {
+      try {
+        const res = await fetch(`/api/student/tests/${id}`, {
+          cache: "no-store"
+        });
+
+        const data = await res.json();
         setTest(data);
+
+      } catch (err) {
+        console.error("Load test error:", err);
+      } finally {
         setLoading(false);
-      })
-      .catch(err => {
-        console.error(err);
-        setLoading(false);
-      });
+      }
+    }
+
+    loadTest();
   }, [id]);
 
   /* ---------------- TIMER ---------------- */
@@ -75,28 +81,42 @@ export default function TakeTest() {
     );
 
     try {
+
+      console.log("🚀 Submitting test...");
+
       const res = await fetch("/api/tests/submit", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          testId: Number(id),       // ✅ FIXED
-          topic: test.topic,        // ✅ FIXED
-          score: finalScore,        // ✅ FIXED
+          testId: Number(id),
+          topic: test.topic,
+          score: finalScore,
         }),
       });
 
+      if (!res.ok) {
+        const errText = await res.text();
+        console.error("❌ API Error:", errText);
+        throw new Error("Submit failed");
+      }
+
       const data = await res.json();
-      console.log("Submit response:", data);
+      console.log("✅ Submit success:", data);
 
       alert(`Test submitted! Your score: ${finalScore}%`);
 
-      router.push("/student/dashboard");
+      // 🔥 IMPORTANT FIX: wait before redirect
+      await new Promise((resolve) => setTimeout(resolve, 500));
+
+      router.replace("/student/dashboard");
 
     } catch (err) {
-      console.error("Submit error:", err);
+
+      console.error("❌ Submit error:", err);
       alert("Failed to submit test ❌");
+
       setSubmitted(false);
     }
   }
@@ -202,6 +222,7 @@ export default function TakeTest() {
             </button>
 
             <button
+              disabled={submitted}
               onClick={() =>
                 current === totalQuestions - 1
                   ? submitTest()

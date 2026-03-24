@@ -54,15 +54,23 @@ export default function TeacherDashboard() {
   useEffect(() => {
     const loadAnalytics = async () => {
       try {
-        const res = await fetch("/api/teacher/analytics");
-        const data = await res.json();
+        const res = await fetch("/api/teacher/analytics", {
+  cache: "no-store",
+});
+        if (!res.ok) {
+  console.error("Analytics API failed");
+  setAnalysis([]);
+  return;
+}
+     const data = await res.json();
 
-        const formatted = data.map((item) => ({
-          topic: item.topic,
-          avg: Number(item.avg),
-          status: getStatus(Number(item.avg)),
-        }));
-
+const formatted = Array.isArray(data)
+  ? data.map((item) => ({
+      topic: item.topic || "Unknown",
+      avg: Number(item.avg || 0),
+      status: getStatus(Number(item.avg || 0)),
+    }))
+  : [];
         setAnalysis(formatted);
       } catch (err) {
         console.error("API Error:", err);
