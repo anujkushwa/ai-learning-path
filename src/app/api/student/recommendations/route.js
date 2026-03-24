@@ -1,9 +1,8 @@
 import { NextResponse } from "next/server";
 import { currentUser } from "@clerk/nextjs/server";
-import {pool} from "@/lib/db";
+import { pool } from "@/lib/db";
 
 export async function GET() {
-
   try {
 
     const user = await currentUser();
@@ -15,14 +14,27 @@ export async function GET() {
       );
     }
 
+    // 🔥 Step 1: Get student
+    const studentRes = await pool.query(
+      `SELECT * FROM students WHERE clerk_id = $1`,
+      [user.id]
+    );
+
+    const student = studentRes.rows[0];
+
+    if (!student) {
+      return NextResponse.json({});
+    }
+
+    // 🔥 Step 2: Use student_id (FIXED)
     const resultsRes = await pool.query(
       `
       SELECT t.topic, r.score
       FROM test_results r
       JOIN tests t ON t.id = r.test_id
-      WHERE r.student_clerk_id = $1
+      WHERE r.student_id = $1
       `,
-      [user.id]
+      [student.id]
     );
 
     const results = resultsRes.rows;
@@ -31,6 +43,7 @@ export async function GET() {
       return NextResponse.json({});
     }
 
+    // 🔥 Step 3: Find weakest topic
     let weakTopic = results[0].topic;
     let lowest = results[0].score;
 
@@ -60,7 +73,5 @@ export async function GET() {
       { error: "Server error" },
       { status: 500 }
     );
-
   }
-
 }

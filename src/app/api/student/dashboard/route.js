@@ -14,7 +14,7 @@ export async function GET() {
       );
     }
 
-    // 👨‍🎓 2. Get student
+    // 👨‍🎓 2. Get student from DB
     const studentRes = await pool.query(
       `SELECT * FROM students WHERE clerk_id = $1`,
       [user.id]
@@ -29,12 +29,12 @@ export async function GET() {
       );
     }
 
-    console.log("Student ID:", student.id); // 🔍 debug
+    console.log("🔥 Student ID:", student.id);
 
-    // 📊 3. Get results (FIXED)
+    // 📊 3. Get test results (FIXED)
     const result = await pool.query(
       `
-      SELECT
+      SELECT 
         COALESCE(t.topic, tr.topic) AS topic,
         tr.score
       FROM test_results tr
@@ -45,9 +45,9 @@ export async function GET() {
       [student.id]
     );
 
-    console.log("DB Results:", result.rows); // 🔍 debug
+    console.log("🔥 Results:", result.rows);
 
-    // 📦 4. Format data
+    // 📦 4. Format response
     const formatted = result.rows.map((r) => {
       let status = "Strong";
 
@@ -64,7 +64,7 @@ export async function GET() {
     return NextResponse.json(formatted);
 
   } catch (error) {
-    console.error("STUDENT DASHBOARD ERROR:", error);
+    console.error("❌ STUDENT DASHBOARD ERROR:", error);
 
     return NextResponse.json(
       { error: "Failed to load dashboard" },
