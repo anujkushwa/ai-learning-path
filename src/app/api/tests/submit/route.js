@@ -5,7 +5,9 @@ import { calculateStatus } from "@/lib/calcStatus";
 
 export async function POST(request) {
   try {
-    // 🔐 1. Get logged-in user (Clerk)
+    console.log("🔥 API HIT");
+
+    // 🔐 1. Get logged-in user
     const user = await currentUser();
 
     if (!user) {
@@ -15,8 +17,11 @@ export async function POST(request) {
       );
     }
 
-    // 📥 2. Get request data
-    const { testId, topic, score } = await request.json();
+    // 📥 2. Get request body
+    const body = await request.json();
+    const { testId, topic, score } = body;
+
+    console.log("BODY:", body);
 
     if (!testId || !topic || score === undefined) {
       return NextResponse.json(
@@ -25,13 +30,15 @@ export async function POST(request) {
       );
     }
 
-    // 👨‍🎓 3. Get student from DB
+    // 👨‍🎓 3. Get student
     const studentRes = await pool.query(
-      `SELECT * FROM students WHERE clerk_id = $1`,
+      `SELECT id FROM students WHERE clerk_id = $1`,
       [user.id]
     );
 
     const student = studentRes.rows[0];
+
+    console.log("STUDENT:", student);
 
     if (!student) {
       return NextResponse.json(
@@ -41,25 +48,36 @@ export async function POST(request) {
     }
 
     // 🧠 4. Calculate status
-    const status = calculateStatus(score);
+    const status = calculateStatus(Number(score));
 
-    // 🔥 5. INSERT FIX (MAIN CHANGE)
+    // 🔥 5. Insert into DB
     await pool.query(
       `
       INSERT INTO test_results 
       (student_id, test_id, topic, score, status)
       VALUES ($1, $2, $3, $4, $5)
       `,
-      [student.id, testId, topic, score, status]
+      [
+        student.id,
+        Number(testId),   // 🔥 IMPORTANT
+        topic,
+        Number(score),    // 🔥 IMPORTANT
+        status
+      ]
     );
 
-    return NextResponse.json({ success: true });
+    console.log("✅ INSERT SUCCESS");
+
+    return NextResponse.json({
+      success: true,
+      message: "Test submitted successfully"
+    });
 
   } catch (error) {
-    console.error("POST /api/tests/submit error:", error);
+    console.error("❌ SUBMIT ERROR:", error);
 
     return NextResponse.json(
-      { error: "Database error" },
+      { error: error.message },
       { status: 500 }
     );
   }

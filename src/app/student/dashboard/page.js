@@ -20,7 +20,6 @@ export default function StudentDashboard() {
 
   /* ---------- ROLE SECURITY ---------- */
   useEffect(() => {
-
     if (!isLoaded) return;
 
     const role = user?.unsafeMetadata?.role;
@@ -28,19 +27,18 @@ export default function StudentDashboard() {
     if (role !== "student") {
       router.replace("/select-role");
     }
-
   }, [user, isLoaded, router]);
 
-  /* ---------- LOAD DASHBOARD (FIXED 🔥) ---------- */
+  /* ---------- LOAD DASHBOARD ---------- */
   useEffect(() => {
 
     if (!isLoaded) return;
 
-    async function loadDashboard() {
+    const loadDashboard = async () => {
       try {
 
         const res = await fetch("/api/student/dashboard", {
-          cache: "no-store" // 🔥 FIX: no caching
+          cache: "no-store",
         });
 
         if (!res.ok) {
@@ -51,65 +49,83 @@ export default function StudentDashboard() {
 
         const data = await res.json();
 
-        setResults(Array.isArray(data) ? data : []);
+        // 🔥 SAFE FIX
+        const safeData = Array.isArray(data)
+          ? data.map((r) => ({
+              topic: r.topic || "Unknown",
+              score: Number(r.score || 0),
+              status: r.status || "Average",
+            }))
+          : [];
+
+        console.log("📊 Student Results:", safeData);
+
+        setResults(safeData);
 
       } catch (err) {
-
         console.error("Dashboard error:", err);
         setResults([]);
-
       } finally {
-
         setLoading(false);
-
       }
-    }
+    };
 
     loadDashboard();
 
   }, [isLoaded]);
 
-  /* ---------- AUTO REFRESH (OPTIONAL 🔥) ---------- */
+  /* ---------- AUTO REFRESH (SAFE) ---------- */
   useEffect(() => {
+
+    if (!isLoaded) return;
 
     const interval = setInterval(async () => {
       try {
         const res = await fetch("/api/student/dashboard", {
-          cache: "no-store"
+          cache: "no-store",
         });
 
         const data = await res.json();
-        setResults(Array.isArray(data) ? data : []);
+
+        const safeData = Array.isArray(data)
+          ? data.map((r) => ({
+              topic: r.topic || "Unknown",
+              score: Number(r.score || 0),
+              status: r.status || "Average",
+            }))
+          : [];
+
+        setResults(safeData);
 
       } catch (err) {
         console.warn("Auto refresh failed");
       }
-    }, 5000); // every 5 sec
+    }, 5000);
 
     return () => clearInterval(interval);
 
-  }, []);
+  }, [isLoaded]);
 
   /* ---------- LOAD AI SUGGESTIONS ---------- */
   useEffect(() => {
 
-    async function loadSuggestions() {
+    const loadSuggestions = async () => {
       try {
 
         const res = await fetch("/api/student/recommendations", {
-          cache: "no-store"
+          cache: "no-store",
         });
 
         if (!res.ok) return;
 
         const data = await res.json();
 
-        setRecommendation(data);
+        setRecommendation(data || null);
 
       } catch (err) {
         console.warn("Recommendation API error");
       }
-    }
+    };
 
     loadSuggestions();
 
@@ -123,7 +139,7 @@ export default function StudentDashboard() {
     testsTaken === 0
       ? 0
       : Math.round(
-          results.reduce((sum, r) => sum + Number(r.score || 0), 0) /
+          results.reduce((sum, r) => sum + r.score, 0) /
             testsTaken
         );
 
@@ -242,7 +258,6 @@ export default function StudentDashboard() {
                   </p>
 
                   {recommendation.video && (
-
                     <a
                       href={recommendation.video}
                       target="_blank"
@@ -250,7 +265,6 @@ export default function StudentDashboard() {
                     >
                       Watch Recommended Video
                     </a>
-
                   )}
 
                 </div>
@@ -292,16 +306,13 @@ export default function StudentDashboard() {
 function StatCard({ icon, title, value }) {
   return (
     <div className="bg-white/70 backdrop-blur-xl rounded-xl shadow-lg p-6 flex items-center gap-5 border border-white">
-
       <div className="w-12 h-12 flex items-center justify-center rounded-lg bg-indigo-100 text-indigo-600">
         {icon}
       </div>
-
       <div>
         <p className="text-sm text-gray-600">{title}</p>
         <h2 className="text-2xl font-semibold text-gray-800">{value}</h2>
       </div>
-
     </div>
   );
 }

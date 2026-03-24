@@ -12,16 +12,35 @@ export default function StudentTestPage() {
 
   /* ---------------- LOAD TESTS ---------------- */
   useEffect(() => {
-    fetch("/api/student/tests/all")
-      .then(res => res.json())
-      .then(data => {
-        setTests(data);
+
+    async function loadTests() {
+      try {
+
+        const res = await fetch("/api/student/tests/all", {
+          cache: "no-store", // 🔥 always fresh data
+        });
+
+        if (!res.ok) {
+          console.error("Failed to fetch tests");
+          setTests([]);
+          return;
+        }
+
+        const data = await res.json();
+
+        // 🔥 safe fallback
+        setTests(Array.isArray(data) ? data : []);
+
+      } catch (err) {
+        console.error("Error loading tests:", err);
+        setTests([]);
+      } finally {
         setLoading(false);
-      })
-      .catch(err => {
-        console.error(err);
-        setLoading(false);
-      });
+      }
+    }
+
+    loadTests();
+
   }, []);
 
   return (
@@ -57,7 +76,7 @@ export default function StudentTestPage() {
 
               {tests.map((test) => {
 
-                const questionCount = Number(test.questions_count) || 0;
+                const questionCount = Number(test?.questions_count) || 0;
                 const duration = questionCount * 2;
 
                 return (
@@ -79,12 +98,12 @@ export default function StudentTestPage() {
 
                     {/* TITLE */}
                     <h2 className="text-lg font-semibold text-gray-800 mb-2">
-                      {test.title}
+                      {test?.title || "Untitled Test"}
                     </h2>
 
                     {/* TOPIC */}
                     <p className="text-sm text-gray-500 mb-4">
-                      Topic: {test.topic}
+                      Topic: {test?.topic || "N/A"}
                     </p>
 
                     {/* INFO ROW */}
@@ -95,12 +114,14 @@ export default function StudentTestPage() {
                         {duration} mins
                       </span>
 
-                      {test.difficulty && (
-                        <span className={`px-2 py-1 rounded-full text-xs font-medium
+                      {test?.difficulty && (
+                        <span
+                          className={`px-2 py-1 rounded-full text-xs font-medium
                           ${test.difficulty === "Easy" && "bg-green-100 text-green-600"}
                           ${test.difficulty === "Medium" && "bg-yellow-100 text-yellow-600"}
                           ${test.difficulty === "Hard" && "bg-red-100 text-red-600"}
-                        `}>
+                        `}
+                        >
                           {test.difficulty}
                         </span>
                       )}
