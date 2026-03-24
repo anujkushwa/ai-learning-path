@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { currentUser } from "@clerk/nextjs/server";
-import {pool} from "@/lib/db";
+import { pool } from "@/lib/db";
 
 export async function GET() {
   try {
@@ -10,8 +10,19 @@ export async function GET() {
       return NextResponse.json([], { status: 200 });
     }
 
-    const userId = user.id;
+    // 🔥 Step 1: Get student from DB
+    const studentRes = await pool.query(
+      `SELECT * FROM students WHERE clerk_id = $1`,
+      [user.id]
+    );
 
+    const student = studentRes.rows[0];
+
+    if (!student) {
+      return NextResponse.json([], { status: 200 });
+    }
+
+    // 🔥 Step 2: Use student_id (IMPORTANT FIX)
     const result = await pool.query(
       `
       SELECT
@@ -19,10 +30,10 @@ export async function GET() {
         tr.score
       FROM test_results tr
       JOIN tests t ON t.id = tr.test_id
-      WHERE tr.student_clerk_id = $1
+      WHERE tr.student_id = $1
       ORDER BY tr.created_at DESC
       `,
-      [userId]
+      [student.id]
     );
 
     const formatted = result.rows.map((r) => {
@@ -41,7 +52,6 @@ export async function GET() {
     return NextResponse.json(formatted);
 
   } catch (error) {
-
     console.error("STUDENT DASHBOARD ERROR:", error);
 
     return NextResponse.json([], { status: 200 });
