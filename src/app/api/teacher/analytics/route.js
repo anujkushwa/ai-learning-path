@@ -21,27 +21,22 @@ export async function GET() {
       return NextResponse.json({ error: "Teacher not found" }, { status: 404 });
     }
 
-    console.log("Teacher:", teacher);
-
-    // 🔥 IMPORTANT FIX: LEFT JOIN (data missing hone pe bhi show karega)
     const result = await pool.query(
       `
       SELECT 
-        COALESCE(tr.topic, t.topic, 'Unknown') AS topic,
+        COALESCE(tr.topic, 'Unknown') AS topic,
         ROUND(COALESCE(AVG(tr.score), 0)::numeric, 2) AS avg
-      FROM tests t
-      LEFT JOIN test_results tr ON tr.test_id = t.id
+      FROM test_results tr
+      JOIN tests t ON tr.test_id = t.id
 
       WHERE t.institute_id = $1
       AND LOWER(TRIM(t.course)) = LOWER(TRIM($2))
 
-      GROUP BY COALESCE(tr.topic, t.topic)
+      GROUP BY tr.topic
       ORDER BY avg ASC
       `,
       [teacher.institute_id, teacher.course]
     );
-
-    console.log("RESULT:", result.rows);
 
     return NextResponse.json(result.rows || []);
 
