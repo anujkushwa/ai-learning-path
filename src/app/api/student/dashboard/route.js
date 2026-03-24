@@ -4,13 +4,17 @@ import { pool } from "@/lib/db";
 
 export async function GET() {
   try {
+    // 🔐 1. Get logged-in user
     const user = await currentUser();
 
     if (!user) {
-      return NextResponse.json([], { status: 200 });
+      return NextResponse.json(
+        { error: "Unauthorized" },
+        { status: 401 }
+      );
     }
 
-    // 🔥 Step 1: Get student from DB
+    // 👨‍🎓 2. Get student
     const studentRes = await pool.query(
       `SELECT * FROM students WHERE clerk_id = $1`,
       [user.id]
@@ -19,23 +23,31 @@ export async function GET() {
     const student = studentRes.rows[0];
 
     if (!student) {
-      return NextResponse.json([], { status: 200 });
+      return NextResponse.json(
+        { error: "Student not found" },
+        { status: 404 }
+      );
     }
 
-    // 🔥 Step 2: Use student_id (IMPORTANT FIX)
+    console.log("Student ID:", student.id); // 🔍 debug
+
+    // 📊 3. Get results (FIXED)
     const result = await pool.query(
       `
       SELECT
-        t.topic,
+        COALESCE(t.topic, tr.topic) AS topic,
         tr.score
       FROM test_results tr
-      JOIN tests t ON t.id = tr.test_id
+      LEFT JOIN tests t ON t.id = tr.test_id
       WHERE tr.student_id = $1
       ORDER BY tr.created_at DESC
       `,
       [student.id]
     );
 
+    console.log("DB Results:", result.rows); // 🔍 debug
+
+    // 📦 4. Format data
     const formatted = result.rows.map((r) => {
       let status = "Strong";
 
@@ -43,9 +55,9 @@ export async function GET() {
       else if (r.score < 70) status = "Average";
 
       return {
-        topic: r.topic,
-        score: r.score,
-        status
+        topic: r.topic || "Unknown",
+        score: Number(r.score),
+        status,
       };
     });
 
@@ -54,6 +66,9 @@ export async function GET() {
   } catch (error) {
     console.error("STUDENT DASHBOARD ERROR:", error);
 
-    return NextResponse.json([], { status: 200 });
+    return NextResponse.json(
+      { error: "Failed to load dashboard" },
+      { status: 500 }
+    );
   }
 }

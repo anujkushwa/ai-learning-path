@@ -16,11 +16,9 @@ export default function StudentDashboard() {
 
   const [results, setResults] = useState([]);
   const [recommendation, setRecommendation] = useState(null);
-
   const [loading, setLoading] = useState(true);
 
   /* ---------- ROLE SECURITY ---------- */
-
   useEffect(() => {
 
     if (!isLoaded) return;
@@ -33,15 +31,17 @@ export default function StudentDashboard() {
 
   }, [user, isLoaded, router]);
 
-  /* ---------- LOAD DASHBOARD ---------- */
-
+  /* ---------- LOAD DASHBOARD (FIXED 🔥) ---------- */
   useEffect(() => {
 
-    async function loadDashboard() {
+    if (!isLoaded) return;
 
+    async function loadDashboard() {
       try {
 
-        const res = await fetch("/api/student/dashboard");
+        const res = await fetch("/api/student/dashboard", {
+          cache: "no-store" // 🔥 FIX: no caching
+        });
 
         if (!res.ok) {
           console.warn("Dashboard API failed");
@@ -63,22 +63,42 @@ export default function StudentDashboard() {
         setLoading(false);
 
       }
-
     }
 
     loadDashboard();
 
+  }, [isLoaded]);
+
+  /* ---------- AUTO REFRESH (OPTIONAL 🔥) ---------- */
+  useEffect(() => {
+
+    const interval = setInterval(async () => {
+      try {
+        const res = await fetch("/api/student/dashboard", {
+          cache: "no-store"
+        });
+
+        const data = await res.json();
+        setResults(Array.isArray(data) ? data : []);
+
+      } catch (err) {
+        console.warn("Auto refresh failed");
+      }
+    }, 5000); // every 5 sec
+
+    return () => clearInterval(interval);
+
   }, []);
 
   /* ---------- LOAD AI SUGGESTIONS ---------- */
-
   useEffect(() => {
 
     async function loadSuggestions() {
-
       try {
 
-        const res = await fetch("/api/student/recommendations");
+        const res = await fetch("/api/student/recommendations", {
+          cache: "no-store"
+        });
 
         if (!res.ok) return;
 
@@ -87,11 +107,8 @@ export default function StudentDashboard() {
         setRecommendation(data);
 
       } catch (err) {
-
         console.warn("Recommendation API error");
-
       }
-
     }
 
     loadSuggestions();
@@ -139,7 +156,6 @@ export default function StudentDashboard() {
             <>
 
               {/* STATS */}
-
               <div className="grid md:grid-cols-3 gap-6 mb-12">
 
                 <StatCard
@@ -163,7 +179,6 @@ export default function StudentDashboard() {
               </div>
 
               {/* RECENT TESTS */}
-
               <div className="bg-white/70 backdrop-blur-xl rounded-xl shadow-lg p-6 mb-12 border border-white">
 
                 <h2 className="text-lg font-semibold text-gray-800 mb-6">
@@ -177,7 +192,7 @@ export default function StudentDashboard() {
                 ) : (
                   <div className="divide-y">
 
-                    {results.slice(0,5).map((test, i) => (
+                    {results.slice(0, 5).map((test, i) => (
 
                       <div
                         key={i}
@@ -211,7 +226,6 @@ export default function StudentDashboard() {
               </div>
 
               {/* AI SUGGESTION */}
-
               {recommendation?.weakTopic && (
 
                 <div className="bg-white rounded-xl shadow-lg p-6 mb-12">
@@ -244,7 +258,6 @@ export default function StudentDashboard() {
               )}
 
               {/* ACTION BUTTONS */}
-
               <div className="flex gap-4 mb-16">
 
                 <a
@@ -273,6 +286,8 @@ export default function StudentDashboard() {
     </>
   );
 }
+
+/* ---------- COMPONENT ---------- */
 
 function StatCard({ icon, title, value }) {
   return (
