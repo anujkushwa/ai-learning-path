@@ -4,17 +4,12 @@ import { currentUser } from "@clerk/nextjs/server";
 
 export async function GET() {
   try {
-    // 🔐 Get logged-in user
     const user = await currentUser();
 
     if (!user) {
-      return NextResponse.json(
-        { error: "Unauthorized" },
-        { status: 401 }
-      );
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    // 👨‍🏫 Get teacher
     const teacherRes = await pool.query(
       `SELECT * FROM teachers WHERE clerk_id = $1`,
       [user.id]
@@ -23,32 +18,31 @@ export async function GET() {
     const teacher = teacherRes.rows[0];
 
     if (!teacher) {
-      return NextResponse.json(
-        { error: "Teacher not found" },
-        { status: 404 }
-      );
+      return NextResponse.json({ error: "Teacher not found" }, { status: 404 });
     }
 
-    // 📊 FIXED ANALYTICS QUERY
+    console.log("Teacher:", teacher);
+
+    // 🔥 IMPORTANT FIX: LEFT JOIN (data missing hone pe bhi show karega)
     const result = await pool.query(
       `
       SELECT 
-        COALESCE(tr.topic, 'Unknown') AS topic,
+        COALESCE(tr.topic, t.topic, 'Unknown') AS topic,
         ROUND(COALESCE(AVG(tr.score), 0)::numeric, 2) AS avg
-      FROM test_results tr
-      JOIN tests t ON tr.test_id = t.id
-      JOIN students s ON tr.student_id = s.id
+      FROM tests t
+      LEFT JOIN test_results tr ON tr.test_id = t.id
 
       WHERE t.institute_id = $1
-      AND t.course = $2
+      AND LOWER(TRIM(t.course)) = LOWER(TRIM($2))
 
-      GROUP BY tr.topic
+      GROUP BY COALESCE(tr.topic, t.topic)
       ORDER BY avg ASC
       `,
       [teacher.institute_id, teacher.course]
     );
 
-    // ✅ Always return array
+    console.log("RESULT:", result.rows);
+
     return NextResponse.json(result.rows || []);
 
   } catch (error) {
