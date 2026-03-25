@@ -23,7 +23,7 @@ export async function POST(req) {
 
     if (!title || !description || !file) {
       return NextResponse.json(
-        { error: "Title, description and file are required" },
+        { error: "All fields required" },
         { status: 400 }
       );
     }
@@ -39,20 +39,19 @@ export async function POST(req) {
 
     if (!allowedTypes.includes(file.type)) {
       return NextResponse.json(
-        { error: "Only PDF, DOCX, PPT files allowed" },
+        { error: "Only PDF, DOCX, PPT allowed" },
         { status: 400 }
       );
     }
 
-    // 📏 Size limit
     if (file.size > 10 * 1024 * 1024) {
       return NextResponse.json(
-        { error: "File must be < 10MB" },
+        { error: "Max size 10MB" },
         { status: 400 }
       );
     }
 
-    // 👨‍🏫 Get teacher institute + course
+    // 👨‍🏫 Get teacher data
     const teacherRes = await pool.query(
       `SELECT institute_id, course
        FROM teachers
@@ -67,7 +66,10 @@ export async function POST(req) {
       );
     }
 
-    const { institute_id, course } = teacherRes.rows[0];
+    let { institute_id, course } = teacherRes.rows[0];
+
+    // ✅ Normalize course (IMPORTANT)
+    course = course.trim();
 
     // 📦 File processing
     const bytes = await file.arrayBuffer();
@@ -92,7 +94,7 @@ export async function POST(req) {
 
     const fileUrl = `/uploads/${uniqueName}`;
 
-    // 💾 Save in DB
+    // 💾 Save note
     await pool.query(
       `INSERT INTO notes
        (title, description, file_url, file_type, institute_id, course)

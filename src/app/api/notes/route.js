@@ -10,7 +10,7 @@ export async function GET() {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    // 👨‍🎓 Get student institute + course
+    // 👨‍🎓 Get student data
     const studentRes = await pool.query(
       `SELECT institute_id, course
        FROM students
@@ -24,12 +24,12 @@ export async function GET() {
 
     const { institute_id, course } = studentRes.rows[0];
 
-    // 📚 Fetch notes
+    // 📚 Fetch notes (CASE + SPACE SAFE)
     const notesRes = await pool.query(
       `SELECT id, title, description, file_url, file_type
        FROM notes
        WHERE institute_id = $1
-       AND course = $2
+       AND LOWER(TRIM(course)) = LOWER(TRIM($2))
        ORDER BY created_at DESC`,
       [institute_id, course]
     );
