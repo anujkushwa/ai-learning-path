@@ -1,23 +1,40 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import TeacherNavbar from "@/components/TeacherNavbar";
 import DashboardFooter from "@/components/DashboardFooter";
 import { Eye, Upload } from "lucide-react";
 
-/* -------- MOCK DATA (later from DB) -------- */
-const learners = [
-  { id: 1, name: "Amit", level: "Weak", weakTopic: "Arrays", tests: 5 },
-  { id: 2, name: "Neha", level: "Average", weakTopic: "Loops", tests: 3 },
-  { id: 3, name: "Rahul", level: "Strong", weakTopic: "-", tests: 6 },
-];
-
 export default function LearnerHub() {
 
+  // 🔥 Learners state
+  const [learners, setLearners] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  // 🔥 Upload state
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
   const [file, setFile] = useState(null);
 
+  // 🚀 Fetch learners (DYNAMIC)
+  useEffect(() => {
+    async function fetchLearners() {
+      try {
+        const res = await fetch("/api/teacher/learners");
+        const data = await res.json();
+        setLearners(data);
+      } catch (err) {
+        console.error("Error fetching learners:", err);
+        setLearners([]);
+      } finally {
+        setLoading(false);
+      }
+    }
+
+    fetchLearners();
+  }, []);
+
+  // 📤 Upload Notes
   async function handleUpload() {
     if (!title || !description || !file) {
       alert("All fields required");
@@ -29,18 +46,23 @@ export default function LearnerHub() {
     formData.append("description", description);
     formData.append("file", file);
 
-    const res = await fetch("/api/notes/upload", {
-      method: "POST",
-      body: formData
-    });
+    try {
+      const res = await fetch("/api/notes/upload", {
+        method: "POST",
+        body: formData,
+      });
 
-    if (res.ok) {
-      alert("Notes uploaded successfully");
-      setTitle("");
-      setDescription("");
-      setFile(null);
-    } else {
-      alert("Upload failed");
+      if (res.ok) {
+        alert("Notes uploaded successfully");
+        setTitle("");
+        setDescription("");
+        setFile(null);
+      } else {
+        alert("Upload failed");
+      }
+    } catch (error) {
+      console.error(error);
+      alert("Something went wrong");
     }
   }
 
@@ -61,7 +83,7 @@ export default function LearnerHub() {
             </p>
           </div>
 
-          {/* UPLOAD EXTRA NOTES */}
+          {/* 🔥 Upload Notes */}
           <section className="bg-white rounded-2xl shadow-lg p-8">
 
             <div className="flex items-center gap-2 mb-6">
@@ -73,17 +95,16 @@ export default function LearnerHub() {
 
             <div className="grid md:grid-cols-2 gap-6">
 
-              {/* LEFT */}
               <div>
                 <label className="block text-sm font-medium mb-1">
                   Note Title
                 </label>
                 <input
                   type="text"
-                  placeholder="e.g. Arrays Important Notes"
+                  placeholder="e.g. Arrays Notes"
                   value={title}
                   onChange={(e) => setTitle(e.target.value)}
-                  className="w-full p-3 border rounded-lg focus:ring-2 focus:ring-emerald-500 outline-none"
+                  className="w-full p-3 border rounded-lg"
                 />
 
                 <label className="block text-sm font-medium mt-4 mb-1">
@@ -91,16 +112,14 @@ export default function LearnerHub() {
                 </label>
                 <textarea
                   rows="4"
-                  placeholder="Short description about this note..."
+                  placeholder="Short description..."
                   value={description}
                   onChange={(e) => setDescription(e.target.value)}
-                  className="w-full p-3 border rounded-lg focus:ring-2 focus:ring-emerald-500 outline-none"
+                  className="w-full p-3 border rounded-lg"
                 />
               </div>
 
-              {/* RIGHT */}
               <div className="flex flex-col justify-between">
-
                 <div>
                   <label className="block text-sm font-medium mb-1">
                     Upload File
@@ -110,27 +129,20 @@ export default function LearnerHub() {
                     onChange={(e) => setFile(e.target.files[0])}
                     className="w-full p-3 border rounded-lg bg-slate-50"
                   />
-                  <p className="text-xs text-gray-500 mt-2">
-                    Supported: PDF, DOCX, PPT, JPG, PNG
-                  </p>
                 </div>
 
                 <button
                   onClick={handleUpload}
-                  className="mt-6 px-6 py-3
-                  bg-gradient-to-r from-emerald-600 to-teal-600
-                  hover:from-emerald-700 hover:to-teal-700
-                  text-white rounded-lg font-medium shadow-md transition"
+                  className="mt-6 px-6 py-3 bg-gradient-to-r from-emerald-600 to-teal-600 text-white rounded-lg"
                 >
                   Upload Notes
                 </button>
-
               </div>
 
             </div>
           </section>
 
-          {/* LEARNER DIRECTORY */}
+          {/* 🔥 Learner Directory (DYNAMIC) */}
           <section className="bg-white rounded-2xl shadow-lg p-8">
 
             <h2 className="text-xl font-semibold mb-6">
@@ -149,37 +161,57 @@ export default function LearnerHub() {
               </thead>
 
               <tbody>
-                {learners.map((s) => (
-                  <tr key={s.id} className="border-b hover:bg-slate-50">
-                    <td className="p-3 font-medium">{s.name}</td>
-
-                    <td className="p-3 text-center">
-                      <span
-                        className={`px-3 py-1 rounded-full text-xs font-semibold
-                        ${
-                          s.level === "Weak"
-                            ? "bg-red-100 text-red-600"
-                            : s.level === "Average"
-                            ? "bg-yellow-100 text-yellow-700"
-                            : "bg-emerald-100 text-emerald-600"
-                        }`}
-                      >
-                        {s.level}
-                      </span>
+                {loading ? (
+                  <tr>
+                    <td colSpan="5" className="text-center p-4">
+                      Loading...
                     </td>
-
-                    <td className="p-3 text-center">{s.weakTopic}</td>
-                    <td className="p-3 text-center">{s.tests}</td>
-
-                    <td className="p-3 text-center">
-                      <button className="flex items-center gap-1 text-emerald-600 hover:underline mx-auto">
-                        <Eye size={16} />
-                        View
-                      </button>
-                    </td>
-
                   </tr>
-                ))}
+                ) : learners.length === 0 ? (
+                  <tr>
+                    <td colSpan="5" className="text-center p-4 text-gray-500">
+                      No learners found
+                    </td>
+                  </tr>
+                ) : (
+                  learners.map((s) => (
+                    <tr key={s.id} className="border-b hover:bg-slate-50">
+
+                      <td className="p-3 font-medium">{s.name}</td>
+
+                      <td className="p-3 text-center">
+                        <span
+                          className={`px-3 py-1 rounded-full text-xs font-semibold
+                          ${
+                            s.level === "Weak"
+                              ? "bg-red-100 text-red-600"
+                              : s.level === "Average"
+                              ? "bg-yellow-100 text-yellow-700"
+                              : "bg-emerald-100 text-emerald-600"
+                          }`}
+                        >
+                          {s.level}
+                        </span>
+                      </td>
+
+                      <td className="p-3 text-center">
+                        {s.weakTopic || "-"}
+                      </td>
+
+                      <td className="p-3 text-center">
+                        {s.tests}
+                      </td>
+
+                      <td className="p-3 text-center">
+                        <button className="flex items-center gap-1 text-emerald-600 hover:underline mx-auto">
+                          <Eye size={16} />
+                          View
+                        </button>
+                      </td>
+
+                    </tr>
+                  ))
+                )}
               </tbody>
             </table>
 
