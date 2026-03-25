@@ -22,7 +22,7 @@ export async function GET(req, { params }) {
       );
     }
 
-    // 👨‍🎓 Get student
+    // 👨‍🎓 Get student data
     const studentRes = await pool.query(
       `SELECT institute_id, course
        FROM students
@@ -37,15 +37,18 @@ export async function GET(req, { params }) {
       );
     }
 
-    const { institute_id, course } = studentRes.rows[0];
+    let { institute_id, course } = studentRes.rows[0];
 
-    // 🔒 Secure note fetch
+    // ✅ Normalize course
+    course = course.trim();
+
+    // 🔒 Secure fetch
     const noteRes = await pool.query(
       `SELECT id, title, description, file_url, file_type
        FROM notes
        WHERE id = $1
        AND institute_id = $2
-       AND course = $3`,
+       AND LOWER(TRIM(course)) = LOWER(TRIM($3))`,
       [noteId, institute_id, course]
     );
 
@@ -59,7 +62,7 @@ export async function GET(req, { params }) {
     return NextResponse.json(noteRes.rows[0]);
 
   } catch (error) {
-    console.error("❌ NOTE ERROR:", error);
+    console.error("❌ NOTE FETCH ERROR:", error);
 
     return NextResponse.json(
       { error: "Server error" },
