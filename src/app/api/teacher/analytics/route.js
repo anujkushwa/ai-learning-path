@@ -4,17 +4,19 @@ import { currentUser } from "@clerk/nextjs/server";
 
 export async function GET() {
   try {
-    // 🔐 Get logged-in user
+    // 🔐 1. Get logged-in user
     const user = await currentUser();
 
     if (!user) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    // 👨‍🏫 Get teacher
+    // 👨‍🏫 
+
+
     const teacherRes = await pool.query(
       `SELECT * FROM teachers WHERE clerk_id = $1`,
-      [user.id]
+      [user.id],
     );
 
     const teacher = teacherRes.rows[0];
@@ -23,29 +25,22 @@ export async function GET() {
       return NextResponse.json({ error: "Teacher not found" }, { status: 404 });
     }
 
-    // 🛑 IMPORTANT: ensure teacher has institute_id
-    if (!teacher.institute_id) {
-      return NextResponse.json(
-        { error: "Teacher not linked to any institute" },
-        { status: 400 }
-      );
-    }
-
     console.log("Teacher:", teacher);
 
-    // 📊 FIXED QUERY
     const result = await pool.query(
       `
       SELECT 
-        COALESCE(t.topic, 'Unknown') AS topic,
-        ROUND(COALESCE(AVG(tr.score), 0)::numeric, 2) AS avg_score
+        COALESCE(t.topic, tr.topic, 'Unknown') AS topic,
+        ROUND(COALESCE(AVG(tr.score), 0)::numeric, 2) AS avg_score,
+        COUNT(tr.id) AS total_tests
       FROM test_results tr
-      JOIN tests t ON tr.test_id = t.id
-      WHERE t.institute_id = $1
-      GROUP BY t.topic
+      LEFT JOIN tests t ON tr.test_id = t.id
+      WHERE 
+        ($1::int IS NULL OR t.institute_id = $1)
+      GROUP BY COALESCE(t.topic, tr.topic)
       ORDER BY avg_score ASC;
       `,
-      [teacher.institute_id]
+      [teacher.institute_id || null],
     );
 
     console.log("RESULT:", result.rows);
@@ -56,7 +51,7 @@ export async function GET() {
 
     return NextResponse.json(
       { error: "Failed to fetch analytics" },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }
