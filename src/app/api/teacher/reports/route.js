@@ -1,11 +1,9 @@
 import { NextResponse } from "next/server";
 import { currentUser } from "@clerk/nextjs/server";
-import {pool} from "@/lib/db";
+import { pool } from "@/lib/db";
 
 export async function GET() {
-
   try {
-
     const user = await currentUser();
 
     if (!user) {
@@ -19,7 +17,7 @@ export async function GET() {
 
     const teacherRes = await pool.query(
       `
-      SELECT institution, course
+      SELECT institute_id, course
       FROM teachers
       WHERE clerk_id = $1
       `,
@@ -33,10 +31,7 @@ export async function GET() {
       );
     }
 
-    const teacher = teacherRes.rows[0];
-
-    const institution = teacher.institution;
-    const course = teacher.course;
+    const { institute_id, course } = teacherRes.rows[0];
 
     /* ---------- STUDENTS ---------- */
 
@@ -44,10 +39,10 @@ export async function GET() {
       `
       SELECT id, name
       FROM students
-      WHERE institution = $1
-      AND course = $2
+      WHERE institute_id = $1
+      AND LOWER(TRIM(course)) = LOWER(TRIM($2))
       `,
-      [institution, course]
+      [institute_id, course]
     );
 
     const students = studentsRes.rows;
@@ -57,16 +52,17 @@ export async function GET() {
     const resultsRes = await pool.query(
       `
       SELECT
+        s.id AS student_id,
         s.name,
         t.topic,
         r.score
       FROM test_results r
-      JOIN students s ON s.clerk_id = r.student_clerk_id
+      JOIN students s ON s.id = r.student_id
       JOIN tests t ON t.id = r.test_id
-      WHERE s.institution = $1
-      AND s.course = $2
+      WHERE s.institute_id = $1
+      AND LOWER(TRIM(s.course)) = LOWER(TRIM($2))
       `,
-      [institution, course]
+      [institute_id, course]
     );
 
     const results = resultsRes.rows;
@@ -76,7 +72,6 @@ export async function GET() {
     const topicMap = {};
 
     results.forEach((r) => {
-
       if (!topicMap[r.topic]) {
         topicMap[r.topic] = [];
       }
@@ -108,11 +103,15 @@ export async function GET() {
 
     results.forEach((r) => {
 
-      if (!studentMap[r.name]) {
-        studentMap[r.name] = { name: r.name, topics: {} };
+      if (!studentMap[r.student_id]) {
+        studentMap[r.student_id] = {
+          id: r.student_id,
+          name: r.name,
+          topics: {}
+        };
       }
 
-      studentMap[r.name].topics[r.topic] = r.score;
+      studentMap[r.student_id].topics[r.topic] = r.score;
 
     });
 
@@ -121,13 +120,11 @@ export async function GET() {
     /* ---------- SUMMARY ---------- */
 
     const totalStudents = students.length;
-
     const totalTopics = topicReport.length;
 
     let weakestTopic = "N/A";
 
     if (topicReport.length > 0) {
-
       const sorted = [...topicReport].sort(
         (a, b) => a.avgScore - b.avgScore
       );
@@ -136,27 +133,21 @@ export async function GET() {
     }
 
     return NextResponse.json({
-
       summary: {
         totalStudents,
         totalTopics,
         weakestTopic
       },
-
       topicReport,
       studentReport
-
     });
 
   } catch (error) {
-
-    console.error("REPORT ERROR:", error);
+    console.error("❌ REPORT ERROR:", error);
 
     return NextResponse.json(
       { error: "Server error" },
       { status: 500 }
     );
-
   }
-
 }
