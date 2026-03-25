@@ -4,14 +4,10 @@ import { pool } from "@/lib/db";
 
 export async function GET(req, { params }) {
   try {
-
     const user = await currentUser();
 
     if (!user) {
-      return NextResponse.json(
-        { error: "Unauthorized" },
-        { status: 401 }
-      );
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
     const noteId = params.id;
@@ -21,14 +17,11 @@ export async function GET(req, { params }) {
       `SELECT institute_id, course
        FROM students
        WHERE clerk_id = $1`,
-      [user.id]
+      [user.id],
     );
 
     if (studentRes.rows.length === 0) {
-      return NextResponse.json(
-        { error: "Student not found" },
-        { status: 404 }
-      );
+      return NextResponse.json({ error: "Student not found" }, { status: 404 });
     }
 
     const { institute_id, course } = studentRes.rows[0];
@@ -40,25 +33,17 @@ export async function GET(req, { params }) {
        WHERE id = $1
        AND institute_id = $2
        AND course = $3`,
-      [noteId, institute_id, course]
+      [noteId, institute_id, course],
     );
 
     if (noteRes.rows.length === 0) {
-      return NextResponse.json(
-        { error: "Access denied" },
-        { status: 403 }
-      );
+      return NextResponse.json({ error: "Access denied" }, { status: 403 });
     }
 
     return NextResponse.json(noteRes.rows[0]);
-
   } catch (error) {
-
     console.error("NOTE ERROR:", error);
 
-    return NextResponse.json(
-      { error: "Server error" },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: "Server error" }, { status: 500 });
   }
 }

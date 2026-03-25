@@ -9,10 +9,7 @@ export async function POST(req) {
     const user = await currentUser();
 
     if (!user) {
-      return NextResponse.json(
-        { error: "Unauthorized user" },
-        { status: 401 }
-      );
+      return NextResponse.json({ error: "Unauthorized user" }, { status: 401 });
     }
 
     const formData = await req.formData();
@@ -24,7 +21,7 @@ export async function POST(req) {
     if (!title || !description || !file) {
       return NextResponse.json(
         { error: "Title, description and file are required" },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
@@ -34,13 +31,13 @@ export async function POST(req) {
       "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
       "application/msword",
       "application/vnd.ms-powerpoint",
-      "application/vnd.openxmlformats-officedocument.presentationml.presentation"
+      "application/vnd.openxmlformats-officedocument.presentationml.presentation",
     ];
 
     if (!allowedTypes.includes(file.type)) {
       return NextResponse.json(
         { error: "Only PDF, DOCX, PPT files allowed" },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
@@ -48,7 +45,7 @@ export async function POST(req) {
     if (file.size > 10 * 1024 * 1024) {
       return NextResponse.json(
         { error: "File size must be less than 10MB" },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
@@ -57,13 +54,13 @@ export async function POST(req) {
       `SELECT institute_id, course
        FROM teachers
        WHERE clerk_id = $1`,
-      [user.id]
+      [user.id],
     );
 
     if (teacherRes.rows.length === 0) {
       return NextResponse.json(
         { error: "Teacher not registered" },
-        { status: 404 }
+        { status: 404 },
       );
     }
 
@@ -93,29 +90,20 @@ export async function POST(req) {
       `INSERT INTO notes
        (title, description, file_url, file_type, institute_id, course)
        VALUES ($1,$2,$3,$4,$5,$6)`,
-      [
-        title,
-        description,
-        fileUrl,
-        file.type,
-        institute_id,
-        course
-      ]
+      [title, description, fileUrl, file.type, institute_id, course],
     );
 
     return NextResponse.json({
       success: true,
       message: "Note uploaded successfully",
-      fileUrl
+      fileUrl,
     });
-
   } catch (error) {
-
     console.error("UPLOAD ERROR:", error);
 
     return NextResponse.json(
       { error: "Internal server error" },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }

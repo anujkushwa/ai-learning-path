@@ -8,13 +8,10 @@ export async function GET() {
     const user = await currentUser();
 
     if (!user) {
-      return NextResponse.json(
-        { error: "Unauthorized" },
-        { status: 401 }
-      );
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    // 👨‍🎓 2. Get student from DB
+    // 👨‍🎓 2. Get student
     const studentRes = await pool.query(
       `SELECT * FROM students WHERE clerk_id = $1`,
       [user.id]
@@ -23,15 +20,12 @@ export async function GET() {
     const student = studentRes.rows[0];
 
     if (!student) {
-      return NextResponse.json(
-        { error: "Student not found" },
-        { status: 404 }
-      );
+      return NextResponse.json({ error: "Student not found" }, { status: 404 });
     }
 
     console.log("🔥 Student ID:", student.id);
 
-    // 📊 3. Get test results (FIXED)
+    // 📊 3. Get results (SAFE QUERY)
     const result = await pool.query(
       `
       SELECT 
@@ -47,7 +41,7 @@ export async function GET() {
 
     console.log("🔥 Results:", result.rows);
 
-    // 📦 4. Format response
+    // 📦 4. Format data
     const formatted = result.rows.map((r) => {
       let status = "Strong";
 
@@ -61,8 +55,18 @@ export async function GET() {
       };
     });
 
-    return NextResponse.json(formatted);
+    // ✅ 5. Extra stats (SAFE ADDITION)
+    const totalTests = result.rows.length;
 
+    const avgScore =
+      result.rows.reduce((sum, r) => sum + Number(r.score), 0) /
+      (result.rows.length || 1);
+
+    return NextResponse.json({
+      totalTests,
+      avgScore: Number(avgScore.toFixed(2)),
+      data: formatted,
+    });
   } catch (error) {
     console.error("❌ STUDENT DASHBOARD ERROR:", error);
 

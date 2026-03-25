@@ -1,18 +1,13 @@
 import { NextResponse } from "next/server";
 import { currentUser } from "@clerk/nextjs/server";
-import {pool} from "@/lib/db";
+import { pool } from "@/lib/db";
 
 export async function GET(request, { params }) {
-
   try {
-
     const user = await currentUser();
 
     if (!user) {
-      return NextResponse.json(
-        { error: "Unauthorized" },
-        { status: 401 }
-      );
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
     /* FIX FOR NEXTJS 15 */
@@ -26,14 +21,11 @@ export async function GET(request, { params }) {
       FROM students
       WHERE clerk_id = $1
       `,
-      [user.id]
+      [user.id],
     );
 
     if (studentRes.rows.length === 0) {
-      return NextResponse.json(
-        { error: "Student not found" },
-        { status: 403 }
-      );
+      return NextResponse.json({ error: "Student not found" }, { status: 403 });
     }
 
     const student = studentRes.rows[0];
@@ -48,18 +40,11 @@ export async function GET(request, { params }) {
       AND institution = $2
       AND course = $3
       `,
-      [
-        testId,
-        student.institution,
-        student.course
-      ]
+      [testId, student.institution, student.course],
     );
 
     if (testRes.rows.length === 0) {
-      return NextResponse.json(
-        { error: "Access denied" },
-        { status: 403 }
-      );
+      return NextResponse.json({ error: "Access denied" }, { status: 403 });
     }
 
     /* ---------- FETCH QUESTIONS ---------- */
@@ -71,29 +56,22 @@ export async function GET(request, { params }) {
       WHERE test_id = $1
       ORDER BY id
       `,
-      [testId]
+      [testId],
     );
 
     const questions = questionsRes.rows.map((q) => ({
       question: q.question,
       options: q.options,
-      correct: q.correct
+      correct: q.correct,
     }));
 
     return NextResponse.json({
       ...testRes.rows[0],
-      questions
+      questions,
     });
-
   } catch (error) {
-
     console.error("GET TEST ERROR:", error);
 
-    return NextResponse.json(
-      { error: "Database error" },
-      { status: 500 }
-    );
-
+    return NextResponse.json({ error: "Database error" }, { status: 500 });
   }
-
 }

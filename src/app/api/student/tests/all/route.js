@@ -1,18 +1,13 @@
 import { NextResponse } from "next/server";
 import { currentUser } from "@clerk/nextjs/server";
-import {pool} from "@/lib/db";
+import { pool } from "@/lib/db";
 
 export async function GET() {
-
   try {
-
     const user = await currentUser();
 
     if (!user) {
-      return NextResponse.json(
-        { error: "Unauthorized" },
-        { status: 401 }
-      );
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
     /* ---------- GET STUDENT INFO ---------- */
@@ -23,14 +18,11 @@ export async function GET() {
       FROM students
       WHERE clerk_id = $1
       `,
-      [user.id]
+      [user.id],
     );
 
     if (studentRes.rows.length === 0) {
-      return NextResponse.json(
-        { error: "Student not found" },
-        { status: 403 }
-      );
+      return NextResponse.json({ error: "Student not found" }, { status: 403 });
     }
 
     const student = studentRes.rows[0];
@@ -55,27 +47,20 @@ export async function GET() {
       GROUP BY t.id, t.title, t.topic, t.created_at
       ORDER BY t.created_at DESC
       `,
-      [institution, course]
+      [institution, course],
     );
 
     /* ---------- FORMAT RESPONSE ---------- */
 
     const formatted = testsRes.rows.map((test) => ({
       ...test,
-      duration: `${test.question_count * 2} mins`
+      duration: `${test.question_count * 2} mins`,
     }));
 
     return NextResponse.json(formatted);
-
   } catch (error) {
-
     console.error("STUDENT TEST LIST ERROR:", error);
 
-    return NextResponse.json(
-      { error: "Server error" },
-      { status: 500 }
-    );
-
+    return NextResponse.json({ error: "Server error" }, { status: 500 });
   }
-
 }

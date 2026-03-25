@@ -6,16 +6,13 @@ import StudentNavbar from "@/components/StudentNavbar";
 import { ClipboardList, Clock, Play } from "lucide-react";
 
 export default function StudentTestPage() {
-
   const [tests, setTests] = useState([]);
   const [loading, setLoading] = useState(true);
 
   /* ---------------- LOAD TESTS ---------------- */
   useEffect(() => {
-
     async function loadTests() {
       try {
-
         const res = await fetch("/api/student/tests/all", {
           cache: "no-store", // 🔥 always fresh data
         });
@@ -30,7 +27,6 @@ export default function StudentTestPage() {
 
         // 🔥 safe fallback
         setTests(Array.isArray(data) ? data : []);
-
       } catch (err) {
         console.error("Error loading tests:", err);
         setTests([]);
@@ -40,7 +36,6 @@ export default function StudentTestPage() {
     }
 
     loadTests();
-
   }, []);
 
   return (
@@ -48,9 +43,7 @@ export default function StudentTestPage() {
       <StudentNavbar />
 
       <main className="relative pt-24 min-h-screen bg-gradient-to-br from-gray-50 via-sky-50 to-blue-50 px-6 overflow-hidden">
-
         <div className="relative max-w-7xl mx-auto">
-
           {/* HEADER */}
           <h1 className="text-3xl font-semibold text-gray-800 mb-10">
             Available Tests
@@ -58,24 +51,18 @@ export default function StudentTestPage() {
 
           {/* LOADING */}
           {loading && (
-            <p className="text-indigo-600 font-medium">
-              Loading tests...
-            </p>
+            <p className="text-indigo-600 font-medium">Loading tests...</p>
           )}
 
           {/* EMPTY */}
           {!loading && tests.length === 0 && (
-            <p className="text-gray-500">
-              No tests available.
-            </p>
+            <p className="text-gray-500">No tests available.</p>
           )}
 
           {/* GRID */}
           {!loading && tests.length > 0 && (
             <div className="grid md:grid-cols-3 gap-8">
-
               {tests.map((test) => {
-
                 const questionCount = Number(test?.questions_count) || 0;
                 const duration = questionCount * 2;
 
@@ -84,7 +71,6 @@ export default function StudentTestPage() {
                     key={test.id}
                     className="bg-white rounded-2xl shadow-md p-6 hover:shadow-xl transition-all duration-300 border"
                   >
-
                     {/* HEADER ROW */}
                     <div className="flex justify-between items-center mb-4">
                       <div className="w-12 h-12 flex items-center justify-center bg-indigo-100 text-indigo-600 rounded-lg">
@@ -108,7 +94,6 @@ export default function StudentTestPage() {
 
                     {/* INFO ROW */}
                     <div className="flex justify-between items-center text-sm text-gray-600 mb-6">
-
                       <span className="flex items-center gap-1">
                         <Clock size={14} />
                         {duration} mins
@@ -125,7 +110,6 @@ export default function StudentTestPage() {
                           {test.difficulty}
                         </span>
                       )}
-
                     </div>
 
                     {/* BUTTON */}
@@ -138,14 +122,11 @@ export default function StudentTestPage() {
                       <Play size={16} />
                       Start Test
                     </Link>
-
                   </div>
                 );
               })}
-
             </div>
           )}
-
         </div>
       </main>
     </>

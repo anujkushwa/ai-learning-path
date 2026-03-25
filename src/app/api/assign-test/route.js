@@ -8,10 +8,7 @@ export async function POST(req) {
 
     // ✅ Validation
     if (!testId || !studentIds || !studentIds.length) {
-      return NextResponse.json(
-        { error: "Invalid data" },
-        { status: 400 }
-      );
+      return NextResponse.json({ error: "Invalid data" }, { status: 400 });
     }
 
     // ✅ Bulk insert (FAST)
@@ -23,13 +20,9 @@ export async function POST(req) {
     await db.insert(testAssignments).values(values);
 
     return NextResponse.json({ success: true });
-
   } catch (error) {
     console.error("Assignment Error:", error); // ✅ debug
 
-    return NextResponse.json(
-      { error: "Assignment failed" },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: "Assignment failed" }, { status: 500 });
   }
 }

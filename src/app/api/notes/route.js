@@ -14,7 +14,7 @@ export async function GET() {
       `SELECT institute_id, course
        FROM students
        WHERE clerk_id = $1`,
-      [user.id]
+      [user.id],
     );
 
     if (studentRes.rows.length === 0) {
@@ -29,17 +29,13 @@ export async function GET() {
        WHERE institute_id = $1
        AND course = $2
        ORDER BY created_at DESC`,
-      [institute_id, course]
+      [institute_id, course],
     );
 
     return NextResponse.json(notesRes.rows);
-
   } catch (error) {
     console.error(error);
 
-    return NextResponse.json(
-      { error: "Server error" },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: "Server error" }, { status: 500 });
   }
 }

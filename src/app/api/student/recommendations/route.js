@@ -4,20 +4,16 @@ import { pool } from "@/lib/db";
 
 export async function GET() {
   try {
-
     const user = await currentUser();
 
     if (!user) {
-      return NextResponse.json(
-        { error: "Unauthorized" },
-        { status: 401 }
-      );
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
     // 🔥 Step 1: Get student
     const studentRes = await pool.query(
       `SELECT * FROM students WHERE clerk_id = $1`,
-      [user.id]
+      [user.id],
     );
 
     const student = studentRes.rows[0];
@@ -34,7 +30,7 @@ export async function GET() {
       JOIN tests t ON t.id = r.test_id
       WHERE r.student_id = $1
       `,
-      [student.id]
+      [student.id],
     );
 
     const results = resultsRes.rows;
@@ -57,21 +53,16 @@ export async function GET() {
     const youtube = {
       Arrays: "https://www.youtube.com/watch?v=RBSGKlAvoiM",
       Recursion: "https://www.youtube.com/watch?v=IJDJ0kBx2LM",
-      Sorting: "https://www.youtube.com/watch?v=KGyK-pNvWos"
+      Sorting: "https://www.youtube.com/watch?v=KGyK-pNvWos",
     };
 
     return NextResponse.json({
       weakTopic,
-      video: youtube[weakTopic] || null
+      video: youtube[weakTopic] || null,
     });
-
   } catch (error) {
-
     console.error("RECOMMENDATION ERROR:", error);
 
-    return NextResponse.json(
-      { error: "Server error" },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: "Server error" }, { status: 500 });
   }
 }
