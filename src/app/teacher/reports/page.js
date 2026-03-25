@@ -12,8 +12,7 @@ export default function TeacherReports() {
   const [selectedStudent, setSelectedStudent] = useState(null);
   const [error, setError] = useState(null);
 
-  /* ---------------- LOAD REPORTS ---------------- */
-
+  // 🚀 FETCH REPORTS
   useEffect(() => {
     async function fetchReports() {
       try {
@@ -22,8 +21,6 @@ export default function TeacherReports() {
         if (!res.ok) throw new Error("Failed to load reports");
 
         const data = await res.json();
-
-        console.log("REPORT DATA:", data); // debug
 
         setReportData(data);
 
@@ -38,26 +35,42 @@ export default function TeacherReports() {
     fetchReports();
   }, []);
 
+  // 🔄 LOADING
   if (loading) {
-    return <div className="pt-24 text-center">Loading Reports...</div>;
+    return (
+      <div className="pt-24 text-center text-indigo-600 font-medium">
+        Loading Reports...
+      </div>
+    );
   }
 
+  // ❌ ERROR
   if (error) {
-    return <div className="pt-24 text-center text-red-500">{error}</div>;
+    return (
+      <div className="pt-24 text-center text-red-500 font-medium">
+        {error}
+      </div>
+    );
   }
 
+  // ❌ NO DATA
   if (!reportData) {
-    return <div className="pt-24 text-center">No data found.</div>;
+    return (
+      <div className="pt-24 text-center text-gray-500">
+        No report data found.
+      </div>
+    );
   }
 
-  /* ---------------- FIXED TOPIC EXTRACTION ---------------- */
-
+  // 🧠 DYNAMIC TOPICS
   const topicSet = new Set();
 
   reportData.topicReport?.forEach((t) => topicSet.add(t.topic));
 
   reportData.studentReport?.forEach((s) => {
-    Object.keys(s.topics || {}).forEach((topic) => topicSet.add(topic));
+    Object.keys(s.topics || {}).forEach((topic) =>
+      topicSet.add(topic)
+    );
   });
 
   const allTopics = Array.from(topicSet);
@@ -100,24 +113,22 @@ export default function TeacherReports() {
 
           </div>
 
-          {/* TOPIC REPORT */}
-
+          {/* 📊 TOPIC REPORT */}
           <div className="bg-white rounded-2xl shadow-lg p-6 mb-12">
 
             <h2 className="text-xl font-semibold mb-6">
               Topic-wise Performance
             </h2>
 
-            {reportData.topicReport.length === 0 ? (
+            {reportData.topicReport?.length === 0 ? (
               <p className="text-gray-500">No topic data available</p>
             ) : (
-
               <table className="w-full text-sm">
 
                 <thead className="bg-slate-100">
                   <tr>
                     <th className="p-3 text-left">Topic</th>
-                    <th className="p-3 text-center">Average Score</th>
+                    <th className="p-3 text-center">Avg Score</th>
                     <th className="p-3 text-center">Status</th>
                   </tr>
                 </thead>
@@ -127,11 +138,9 @@ export default function TeacherReports() {
                     <tr key={t.topic} className="border-b hover:bg-slate-50">
 
                       <td className="p-3 font-medium">{t.topic}</td>
-
                       <td className="p-3 text-center">{t.avgScore}%</td>
 
                       <td className="p-3 text-center">
-
                         <span
                           className={`px-3 py-1 rounded-full text-xs font-semibold
                           ${
@@ -144,7 +153,6 @@ export default function TeacherReports() {
                         >
                           {t.status}
                         </span>
-
                       </td>
 
                     </tr>
@@ -156,18 +164,16 @@ export default function TeacherReports() {
 
           </div>
 
-          {/* STUDENT REPORT */}
-
+          {/* 👨‍🎓 STUDENT REPORT */}
           <div className="bg-white rounded-2xl shadow-lg p-6 mb-20">
 
             <h2 className="text-xl font-semibold mb-6">
               Student-wise Performance
             </h2>
 
-            {reportData.studentReport.length === 0 ? (
-              <p className="text-gray-500">No student results available</p>
+            {reportData.studentReport?.length === 0 ? (
+              <p className="text-gray-500">No student data available</p>
             ) : (
-
               <table className="w-full text-sm">
 
                 <thead className="bg-slate-100">
@@ -184,15 +190,12 @@ export default function TeacherReports() {
                 </thead>
 
                 <tbody>
-
                   {reportData.studentReport.map((s) => (
-
                     <tr
-                      key={s.name}
+                      key={s.id || s.name}
                       className="border-b hover:bg-slate-50 cursor-pointer"
                       onClick={() => setSelectedStudent(s)}
                     >
-
                       <td className="p-3 font-medium text-indigo-600">
                         {s.name}
                       </td>
@@ -202,15 +205,11 @@ export default function TeacherReports() {
                           {s.topics?.[topic] ?? "-"}
                         </td>
                       ))}
-
                     </tr>
-
                   ))}
-
                 </tbody>
 
               </table>
-
             )}
 
           </div>
@@ -218,13 +217,10 @@ export default function TeacherReports() {
         </div>
 
         <DashboardFooter />
-
       </main>
 
-      {/* STUDENT DETAIL MODAL */}
-
+      {/* 🔍 MODAL */}
       {selectedStudent && (
-
         <div className="fixed inset-0 bg-black/40 flex items-center justify-center">
 
           <div className="bg-white rounded-xl shadow-xl p-8 w-[400px]">
@@ -235,16 +231,14 @@ export default function TeacherReports() {
 
             <div className="space-y-2">
 
-              {Object.entries(selectedStudent.topics).map(([topic, score]) => (
-
-                <div key={topic} className="flex justify-between border-b pb-2">
-
-                  <span>{topic}</span>
-                  <span className="font-medium">{score}%</span>
-
-                </div>
-
-              ))}
+              {Object.entries(selectedStudent.topics || {}).map(
+                ([topic, score]) => (
+                  <div key={topic} className="flex justify-between border-b pb-2">
+                    <span>{topic}</span>
+                    <span className="font-medium">{score}%</span>
+                  </div>
+                )
+              )}
 
             </div>
 
@@ -258,13 +252,13 @@ export default function TeacherReports() {
           </div>
 
         </div>
-
       )}
 
     </>
   );
 }
 
+// 🧩 COMPONENT
 function SummaryCard({ icon, title, value }) {
   return (
     <div className="bg-white rounded-2xl shadow-lg p-6 flex items-center gap-4">
