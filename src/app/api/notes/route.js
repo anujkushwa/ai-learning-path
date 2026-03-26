@@ -2,12 +2,24 @@ import { NextResponse } from "next/server";
 import { currentUser } from "@clerk/nextjs/server";
 import { pool } from "@/lib/db";
 
-export async function GET() {
+export async function GET(req, { params }) {
   try {
     const user = await currentUser();
 
     if (!user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+      return NextResponse.json(
+        { error: "Unauthorized" },
+        { status: 401 }
+      );
+    }
+
+    const noteId = Number(params.id);
+
+    if (!noteId) {
+      return NextResponse.json(
+        { error: "Invalid note ID" },
+        { status: 400 }
+      );
     }
 
     // 👨‍🎓 Get student data
@@ -19,25 +31,38 @@ export async function GET() {
     );
 
     if (studentRes.rows.length === 0) {
-      return NextResponse.json([]);
+      return NextResponse.json(
+        { error: "Student not found" },
+        { status: 404 }
+      );
     }
 
-    const { institute_id, course } = studentRes.rows[0];
+    let { institute_id, course } = studentRes.rows[0];
 
-    // 📚 Fetch notes (CASE + SPACE SAFE)
-    const notesRes = await pool.query(
+    // ✅ Normalize course
+    course = course.trim();
+
+    // 🔒 Secure fetch
+    const noteRes = await pool.query(
       `SELECT id, title, description, file_url, file_type
        FROM notes
-       WHERE institute_id = $1
-       AND LOWER(TRIM(course)) = LOWER(TRIM($2))
-       ORDER BY created_at DESC`,
-      [institute_id, course]
+       WHERE id = $1
+       AND institute_id = $2
+       AND LOWER(TRIM(course)) = LOWER(TRIM($3))`,
+      [noteId, institute_id, course]
     );
 
-    return NextResponse.json(notesRes.rows);
+    if (noteRes.rows.length === 0) {
+      return NextResponse.json(
+        { error: "Access denied" },
+        { status: 403 }
+      );
+    }
+
+    return NextResponse.json(noteRes.rows[0]);
 
   } catch (error) {
-    console.error("❌ NOTES FETCH ERROR:", error);
+    console.error("❌ NOTE FETCH ERROR:", error);
 
     return NextResponse.json(
       { error: "Server error" },

@@ -22,7 +22,6 @@ export async function GET(req, { params }) {
       );
     }
 
-    // 👨‍🎓 Get student data
     const studentRes = await pool.query(
       `SELECT institute_id, course
        FROM students
@@ -38,11 +37,8 @@ export async function GET(req, { params }) {
     }
 
     let { institute_id, course } = studentRes.rows[0];
-
-    // ✅ Normalize course
     course = course.trim();
 
-    // 🔒 Secure fetch
     const noteRes = await pool.query(
       `SELECT id, title, description, file_url, file_type
        FROM notes

@@ -1,8 +1,14 @@
 import { NextResponse } from "next/server";
 import { pool } from "@/lib/db";
 import { currentUser } from "@clerk/nextjs/server";
-import fs from "fs";
-import path from "path";
+import { v2 as cloudinary } from "cloudinary";
+
+// ✅ Cloudinary config
+cloudinary.config({
+  cloud_name: process.env.CLOUD_NAME,
+  api_key: process.env.CLOUD_API_KEY,
+  api_secret: process.env.CLOUD_API_SECRET,
+});
 
 export async function POST(req) {
   try {
@@ -28,7 +34,7 @@ export async function POST(req) {
       );
     }
 
-    // 📁 Allowed file types
+    // 📁 Allowed types
     const allowedTypes = [
       "application/pdf",
       "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
@@ -51,7 +57,7 @@ export async function POST(req) {
       );
     }
 
-    // 👨‍🏫 Get teacher data
+    // 👨‍🏫 Teacher data
     const teacherRes = await pool.query(
       `SELECT institute_id, course
        FROM teachers
@@ -67,34 +73,25 @@ export async function POST(req) {
     }
 
     let { institute_id, course } = teacherRes.rows[0];
-
-    // ✅ Normalize course (IMPORTANT)
     course = course.trim();
 
-    // 📦 File processing
+    // 🔥 Upload to Cloudinary
     const bytes = await file.arrayBuffer();
     const buffer = Buffer.from(bytes);
 
-    const uniqueName =
-      Date.now() +
-      "-" +
-      Math.random().toString(36).substring(2) +
-      "-" +
-      file.name.replace(/\s/g, "_");
+    const uploadRes = await new Promise((resolve, reject) => {
+      cloudinary.uploader.upload_stream(
+        { resource_type: "auto" },
+        (error, result) => {
+          if (error) reject(error);
+          else resolve(result);
+        }
+      ).end(buffer);
+    });
 
-    const uploadDir = path.join(process.cwd(), "public/uploads");
+    const fileUrl = uploadRes.secure_url;
 
-    if (!fs.existsSync(uploadDir)) {
-      fs.mkdirSync(uploadDir, { recursive: true });
-    }
-
-    const uploadPath = path.join(uploadDir, uniqueName);
-
-    fs.writeFileSync(uploadPath, buffer);
-
-    const fileUrl = `/uploads/${uniqueName}`;
-
-    // 💾 Save note
+    // 💾 Save in DB
     await pool.query(
       `INSERT INTO notes
        (title, description, file_url, file_type, institute_id, course)
@@ -112,7 +109,7 @@ export async function POST(req) {
     console.error("❌ UPLOAD ERROR:", error);
 
     return NextResponse.json(
-      { error: "Internal server error" },
+      { error: error.message },
       { status: 500 }
     );
   }
