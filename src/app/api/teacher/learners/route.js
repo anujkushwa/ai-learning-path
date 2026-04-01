@@ -13,7 +13,7 @@ export async function GET() {
       );
     }
 
-   
+    // 👨‍🏫 Teacher info
     const teacherRes = await pool.query(
       `SELECT institute_id, course
        FROM teachers
@@ -25,9 +25,9 @@ export async function GET() {
       return NextResponse.json([]);
     }
 
-    const { institute_id, course } = teacherRes.rows[0];
+    const { course } = teacherRes.rows[0];
 
-    // 📊 Get learners data (IMPROVED)
+    // 🔥 FIXED: removed institute_id dependency
     const result = await pool.query(
       `
       SELECT 
@@ -37,19 +37,17 @@ export async function GET() {
         COALESCE(AVG(tr.score), 0) AS avg_score
       FROM students s
       LEFT JOIN test_results tr ON s.id = tr.student_id
-      WHERE s.institute_id = $1
-      AND LOWER(TRIM(s.course)) = LOWER(TRIM($2))
+      WHERE LOWER(TRIM(s.course)) = LOWER(TRIM($1))
       GROUP BY s.id, s.name
       ORDER BY s.name ASC
       `,
-      [institute_id, course]
+      [course]
     );
 
-    // 🔥 Get weak topic separately (IMPORTANT FIX)
     const learners = [];
 
     for (let s of result.rows) {
-      // get weakest topic (lowest score)
+
       const weakRes = await pool.query(
         `
         SELECT topic, score
@@ -62,13 +60,13 @@ export async function GET() {
       );
 
       const weakTopic =
-        weakRes.rows.length > 0 ? weakRes.rows[0].topic : "-";
+        weakRes.rows.length > 0 ? weakRes.rows[0].topic.trim() : "-";
 
-      // 🧠 Level calculation
+      const avg = Number(s.avg_score);
+
       let level = "Strong";
-
-      if (s.avg_score < 40) level = "Weak";
-      else if (s.avg_score < 70) level = "Average";
+      if (avg < 40) level = "Weak";
+      else if (avg < 70) level = "Average";
 
       learners.push({
         id: s.id,
