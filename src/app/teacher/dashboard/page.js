@@ -1,5 +1,5 @@
 "use client";
-  import { AlertTriangle, TrendingUp } from "lucide-react";
+import { AlertTriangle, TrendingUp } from "lucide-react";
 import { useEffect, useState } from "react";
 
 import TeacherNavbar from "@/components/TeacherNavbar";
@@ -26,7 +26,7 @@ ChartJS.register(
   LineElement,
   PointElement,
   Tooltip,
-  Legend
+  Legend,
 );
 
 /* ---------------- HELPERS ---------------- */
@@ -39,7 +39,6 @@ const getStatus = (avg) => {
 /* ================================================= */
 
 export default function TeacherDashboard() {
-
   /* ---------------- STATES ---------------- */
   const [analysis, setAnalysis] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -50,27 +49,38 @@ export default function TeacherDashboard() {
   const [searchTerm, setSearchTerm] = useState("");
   const [sortType, setSortType] = useState("default");
 
+
+
+
+
   /* ---------------- FETCH ANALYTICS ---------------- */
   useEffect(() => {
     const loadAnalytics = async () => {
       try {
         const res = await fetch("/api/teacher/analytics", {
-  cache: "no-store",
-});
+          cache: "no-store",
+        });
+                
         if (!res.ok) {
-  console.error("Analytics API failed");
-  setAnalysis([]);
-  return;
-}
-     const data = await res.json();
+          console.error("Analytics API failed");
+          setAnalysis([]);
+          return;
+        }
+        const data = await res.json();
+        console.log("API RESPONSE:", data);
 
-const formatted = Array.isArray(data)
-  ? data.map((item) => ({
-      topic: item.topic || "Unknown",
-      avg: Number(item.avg || 0),
-      status: getStatus(Number(item.avg || 0)),
-    }))
-  : [];
+        const formatted = Array.isArray(data.data)
+          ? data.data.map((item) => ({
+              topic: item.title || "Unknown",
+              avg: Number(item.avg_score || 0),
+              status: getStatus(Number(item.avg_score || 0)),
+            }))
+          : [];
+
+
+
+
+          
         setAnalysis(formatted);
       } catch (err) {
         console.error("API Error:", err);
@@ -99,28 +109,22 @@ const formatted = Array.isArray(data)
   const weakestTopic =
     analysis.find((t) => t.status === "Weak")?.topic || "None";
 
-  const strongCount = analysis.filter(
-    (t) => t.status === "Strong"
-  ).length;
+  const strongCount = analysis.filter((t) => t.status === "Strong").length;
 
-  const weakCount = analysis.filter(
-    (t) => t.status === "Weak"
-  ).length;
+  const weakCount = analysis.filter((t) => t.status === "Weak").length;
 
   const overallLevel =
     analysis.length === 0
       ? "N/A"
       : strongCount > weakCount
-      ? "Good"
-      : "Needs Improvement";
+        ? "Good"
+        : "Needs Improvement";
 
-  const weakTopics = analysis.filter(
-    (t) => t.status === "Weak"
-  );
+  const weakTopics = analysis.filter((t) => t.status === "Weak");
 
   /* ---------------- FILTER + SORT ---------------- */
   let filteredTopics = analysis.filter((t) =>
-    t.topic.toLowerCase().includes(searchTerm.toLowerCase())
+    t.topic.toLowerCase().includes(searchTerm.toLowerCase()),
   );
 
   if (sortType === "high") {
@@ -166,14 +170,10 @@ const formatted = Array.isArray(data)
       <TeacherNavbar />
 
       <main className="pt-24 min-h-screen bg-gradient-to-br from-slate-50 via-white to-emerald-50 px-8">
-
-        <h1 className="text-3xl font-semibold mb-8">
-          Teacher Dashboard
-        </h1>
+        <h1 className="text-3xl font-semibold mb-8">Teacher Dashboard</h1>
 
         {/* STATS */}
         <div className="grid md:grid-cols-3 gap-6 mb-10">
-
           <StatCard
             title="Total Topics"
             value={analysis.length}
@@ -191,93 +191,92 @@ const formatted = Array.isArray(data)
             value={overallLevel}
             onClick={() => setShowAIPlan(true)}
           />
-
         </div>
 
         {/* INSIGHTS */}
-     
 
-<div className="bg-gradient-to-br from-slate-50 to-slate-100 dark:from-slate-900 dark:to-slate-800 rounded-3xl shadow-xl p-8 mb-12 border border-slate-200/50 dark:border-slate-700/50 backdrop-blur-xl">
-
-  <div className="flex items-center justify-between mb-8">
-    <h2 className="text-2xl font-bold text-slate-800 dark:text-white">
-      📊 Topic Insights
-    </h2>
-    <span className="text-sm text-slate-500 dark:text-slate-400">
-      Performance Overview
-    </span>
-  </div>
-
-  <div className="grid md:grid-cols-3 gap-8">
-
-    {analysis.map((t) => {
-      const isWeak = t.status === "Weak";
-      const isAverage = t.status === "Average";
-
-      return (
-        <div
-          key={t.topic}
-          className="group relative bg-white/70 dark:bg-slate-800/70 backdrop-blur-lg p-6 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-md hover:shadow-2xl transition-all duration-300 hover:-translate-y-2"
-        >
-          
-          {/* Top Section */}
-          <div className="flex items-center justify-between mb-4">
-            
-            <div className={`p-3 rounded-xl ${
-              isWeak
-                ? "bg-red-100 text-red-600"
-                : isAverage
-                ? "bg-yellow-100 text-yellow-600"
-                : "bg-emerald-100 text-emerald-600"
-            }`}>
-              {isWeak ? <AlertTriangle size={20} /> : <TrendingUp size={20} />}
-            </div>
-
-            <span className={`text-xs font-semibold px-3 py-1 rounded-full ${
-              isWeak
-                ? "bg-red-100 text-red-600"
-                : isAverage
-                ? "bg-yellow-100 text-yellow-600"
-                : "bg-emerald-100 text-emerald-600"
-            }`}>
-              {t.status}
+        <div className="bg-gradient-to-br from-slate-50 to-slate-100 dark:from-slate-900 dark:to-slate-800 rounded-3xl shadow-xl p-8 mb-12 border border-slate-200/50 dark:border-slate-700/50 backdrop-blur-xl">
+          <div className="flex items-center justify-between mb-8">
+            <h2 className="text-2xl font-bold text-slate-800 dark:text-white">
+              📊 Topic Insights
+            </h2>
+            <span className="text-sm text-slate-500 dark:text-slate-400">
+              Performance Overview
             </span>
-
           </div>
 
-          {/* Topic Name */}
-          <h3 className="text-lg font-semibold text-slate-800 dark:text-white mb-3">
-            {t.topic}
-          </h3>
+          <div className="grid md:grid-cols-3 gap-8">
+            {analysis.map((t) => {
+              const isWeak = t.status === "Weak";
+              const isAverage = t.status === "Average";
 
-          {/* Progress Bar */}
-          <div className="w-full bg-slate-200 dark:bg-slate-700 rounded-full h-2 mb-2 overflow-hidden">
-            <div
-              className={`h-2 rounded-full transition-all duration-700 ${
-                isWeak
-                  ? "bg-red-500"
-                  : isAverage
-                  ? "bg-yellow-500"
-                  : "bg-emerald-500"
-              }`}
-              style={{ width: `${t.avg}%` }}
-            ></div>
+              return (
+                <div
+                  key={t.topic}
+                  className="group relative bg-white/70 dark:bg-slate-800/70 backdrop-blur-lg p-6 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-md hover:shadow-2xl transition-all duration-300 hover:-translate-y-2"
+                >
+                  {/* Top Section */}
+                  <div className="flex items-center justify-between mb-4">
+                    <div
+                      className={`p-3 rounded-xl ${
+                        isWeak
+                          ? "bg-red-100 text-red-600"
+                          : isAverage
+                            ? "bg-yellow-100 text-yellow-600"
+                            : "bg-emerald-100 text-emerald-600"
+                      }`}
+                    >
+                      {isWeak ? (
+                        <AlertTriangle size={20} />
+                      ) : (
+                        <TrendingUp size={20} />
+                      )}
+                    </div>
+
+                    <span
+                      className={`text-xs font-semibold px-3 py-1 rounded-full ${
+                        isWeak
+                          ? "bg-red-100 text-red-600"
+                          : isAverage
+                            ? "bg-yellow-100 text-yellow-600"
+                            : "bg-emerald-100 text-emerald-600"
+                      }`}
+                    >
+                      {t.status}
+                    </span>
+                  </div>
+
+                  {/* Topic Name */}
+                  <h3 className="text-lg font-semibold text-slate-800 dark:text-white mb-3">
+                    {t.topic}
+                  </h3>
+
+                  {/* Progress Bar */}
+                  <div className="w-full bg-slate-200 dark:bg-slate-700 rounded-full h-2 mb-2 overflow-hidden">
+                    <div
+                      className={`h-2 rounded-full transition-all duration-700 ${
+                        isWeak
+                          ? "bg-red-500"
+                          : isAverage
+                            ? "bg-yellow-500"
+                            : "bg-emerald-500"
+                      }`}
+                      style={{ width: `${t.avg}%` }}
+                    ></div>
+                  </div>
+
+                  <p className="text-sm text-slate-500 dark:text-slate-400">
+                    Avg Score:{" "}
+                    <span className="font-semibold">{t.avg.toFixed(1)}%</span>
+                  </p>
+                </div>
+              );
+            })}
           </div>
-
-          <p className="text-sm text-slate-500 dark:text-slate-400">
-            Avg Score: <span className="font-semibold">{t.avg.toFixed(1)}%</span>
-          </p>
-
         </div>
-      );
-    })}
-
-  </div>
-</div>
 
         {/* CHARTS */}
         <div className="grid lg:grid-cols-2 gap-8 mb-12">
-
           <ChartCard title="Topic-wise Average Performance">
             <Bar data={barData} />
           </ChartCard>
@@ -285,19 +284,14 @@ const formatted = Array.isArray(data)
           <ChartCard title="Overall Learning Trend">
             <Line data={lineData} />
           </ChartCard>
-
         </div>
 
         {/* TOPIC MODAL */}
         {showTopics && (
           <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50">
-
             <div className="bg-white w-[600px] max-h-[80vh] overflow-y-auto rounded-2xl p-6">
-
               <div className="flex justify-between items-center mb-4">
-                <h2 className="text-xl font-semibold">
-                  All Topics
-                </h2>
+                <h2 className="text-xl font-semibold">All Topics</h2>
 
                 <button
                   onClick={() => setShowTopics(false)}
@@ -312,13 +306,10 @@ const formatted = Array.isArray(data)
                 placeholder="Search topic..."
                 className="w-full border rounded-lg px-3 py-2 mb-4"
                 value={searchTerm}
-                onChange={(e) =>
-                  setSearchTerm(e.target.value)
-                }
+                onChange={(e) => setSearchTerm(e.target.value)}
               />
 
               <div className="flex gap-3 mb-4">
-
                 <button
                   onClick={() => setSortType("high")}
                   className="px-3 py-1 bg-emerald-100 rounded-lg"
@@ -339,36 +330,27 @@ const formatted = Array.isArray(data)
                 >
                   Reset
                 </button>
-
               </div>
 
               <div className="space-y-3">
-
                 {filteredTopics.map((t) => (
                   <div
                     key={t.topic}
                     className="p-4 bg-slate-50 rounded-xl border flex justify-between"
                   >
                     <span>{t.topic}</span>
-                    <span className="font-medium">
-                      {t.avg.toFixed(1)}%
-                    </span>
+                    <span className="font-medium">{t.avg.toFixed(1)}%</span>
                   </div>
                 ))}
-
               </div>
-
             </div>
-
           </div>
         )}
 
         {/* AI PLAN MODAL */}
         {showAIPlan && (
           <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50">
-
             <div className="bg-white w-[650px] max-h-[80vh] overflow-y-auto rounded-2xl p-6">
-
               <div className="flex justify-between items-center mb-4">
                 <h2 className="text-xl font-semibold">
                   🤖 AI Teaching Recommendation
@@ -382,9 +364,7 @@ const formatted = Array.isArray(data)
                 </button>
               </div>
 
-              <h3 className="font-semibold mb-2">
-                📌 Weak Areas Detected
-              </h3>
+              <h3 className="font-semibold mb-2">📌 Weak Areas Detected</h3>
 
               {weakTopics.length === 0 ? (
                 <p className="text-emerald-600 mb-4">
@@ -413,9 +393,7 @@ const formatted = Array.isArray(data)
                 <li>Weekly mock test</li>
                 <li>Re-evaluate progress</li>
               </ol>
-
             </div>
-
           </div>
         )}
 
@@ -434,9 +412,7 @@ function StatCard({ title, value, onClick }) {
       className="bg-white rounded-2xl shadow-lg p-6 cursor-pointer hover:shadow-xl transition"
     >
       <p className="text-sm text-gray-500">{title}</p>
-      <h2 className="text-3xl font-semibold text-emerald-600 mt-2">
-        {value}
-      </h2>
+      <h2 className="text-3xl font-semibold text-emerald-600 mt-2">{value}</h2>
     </div>
   );
 }

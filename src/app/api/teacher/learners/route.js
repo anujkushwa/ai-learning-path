@@ -13,7 +13,7 @@ export async function GET() {
       );
     }
 
-    // 👨‍🏫 Get teacher institute + course
+   
     const teacherRes = await pool.query(
       `SELECT institute_id, course
        FROM teachers

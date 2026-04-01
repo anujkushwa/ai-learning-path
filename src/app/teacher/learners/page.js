@@ -9,25 +9,38 @@ export default function LearnerHub() {
 
   // 🔥 Learners state
   const [learners, setLearners] = useState([]);
-  const [loading, setLoading] = useState(true);
+  const [loadingLearners, setLoadingLearners] = useState(true);
 
   // 🔥 Upload state
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
   const [file, setFile] = useState(null);
 
-  // 🚀 Fetch learners (DYNAMIC)
+  // 🚀 Fetch learners
   useEffect(() => {
     async function fetchLearners() {
       try {
-        const res = await fetch("/api/teacher/learners");
+        const res = await fetch("/api/teacher/learners", {
+          cache: "no-store",
+        });
+
+        if (!res.ok) {
+          console.error("Learners API failed");
+          setLearners([]);
+          return;
+        }
+
         const data = await res.json();
-        setLearners(data);
+        console.log("LEARNERS:", data);
+
+        // ✅ Ensure array
+        setLearners(Array.isArray(data) ? data : []);
+
       } catch (err) {
         console.error("Error fetching learners:", err);
         setLearners([]);
       } finally {
-        setLoading(false);
+        setLoadingLearners(false); // ✅ FIXED
       }
     }
 
@@ -85,16 +98,12 @@ export default function LearnerHub() {
 
           {/* 🔥 Upload Notes */}
           <section className="bg-white rounded-2xl shadow-lg p-8">
-
             <div className="flex items-center gap-2 mb-6">
               <Upload className="text-emerald-600" />
-              <h2 className="text-xl font-semibold">
-                Upload Extra Notes
-              </h2>
+              <h2 className="text-xl font-semibold">Upload Extra Notes</h2>
             </div>
 
             <div className="grid md:grid-cols-2 gap-6">
-
               <div>
                 <label className="block text-sm font-medium mb-1">
                   Note Title
@@ -133,18 +142,16 @@ export default function LearnerHub() {
 
                 <button
                   onClick={handleUpload}
-                  className="mt-6 px-6 py-3 bg-gradient-to-r from-emerald-600 to-teal-600 text-white rounded-lg"
+                  className="mt-6 px-6 py-3 bg-gradient-to-r from-emerald-600 to-teal-600 text-white rounded-lg hover:opacity-90"
                 >
                   Upload Notes
                 </button>
               </div>
-
             </div>
           </section>
 
-          {/* 🔥 Learner Directory (DYNAMIC) */}
+          {/* 🔥 Learner Directory */}
           <section className="bg-white rounded-2xl shadow-lg p-8">
-
             <h2 className="text-xl font-semibold mb-6">
               Learner Directory
             </h2>
@@ -161,10 +168,10 @@ export default function LearnerHub() {
               </thead>
 
               <tbody>
-                {loading ? (
+                {loadingLearners ? (
                   <tr>
                     <td colSpan="5" className="text-center p-4">
-                      Loading...
+                      Loading learners...
                     </td>
                   </tr>
                 ) : learners.length === 0 ? (
@@ -175,8 +182,10 @@ export default function LearnerHub() {
                   </tr>
                 ) : (
                   learners.map((s) => (
-                    <tr key={s.id} className="border-b hover:bg-slate-50">
-
+                    <tr
+                      key={s.id}
+                      className="border-b hover:bg-emerald-50 transition duration-200"
+                    >
                       <td className="p-3 font-medium">{s.name}</td>
 
                       <td className="p-3 text-center">
@@ -208,13 +217,11 @@ export default function LearnerHub() {
                           View
                         </button>
                       </td>
-
                     </tr>
                   ))
                 )}
               </tbody>
             </table>
-
           </section>
 
         </div>
