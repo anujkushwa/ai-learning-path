@@ -4,7 +4,6 @@ import { pool } from "@/lib/db";
 
 export async function GET() {
   try {
-    // 🔐 1. Get logged-in user
     const user = await currentUser();
 
     if (!user) {
@@ -14,7 +13,6 @@ export async function GET() {
       );
     }
 
-    // 👨‍🎓 2. Get student from DB
     const studentRes = await pool.query(
       `SELECT * FROM students WHERE clerk_id = $1`,
       [user.id]
@@ -29,9 +27,6 @@ export async function GET() {
       );
     }
 
-    console.log("🔥 Student ID:", student.id);
-
-    // 📊 3. Get test results (FIXED)
     const result = await pool.query(
       `
       SELECT 
@@ -45,27 +40,15 @@ export async function GET() {
       [student.id]
     );
 
-    console.log("🔥 Results:", result.rows);
-
-    // 📦 4. Format response
-    const formatted = result.rows.map((r) => {
-      let status = "Strong";
-
-      if (r.score < 40) status = "Weak";
-      else if (r.score < 70) status = "Average";
-
-      return {
-        topic: r.topic || "Unknown",
-        score: Number(r.score),
-        status,
-      };
-    });
+    // ✅ RETURN ALL RESULTS (IMPORTANT)
+    const formatted = result.rows.map((r) => ({
+      topic: r.topic || "Unknown",
+      score: Number(r.score),
+    }));
 
     return NextResponse.json(formatted);
 
   } catch (error) {
-    console.error("❌ STUDENT DASHBOARD ERROR:", error);
-
     return NextResponse.json(
       { error: "Failed to load dashboard" },
       { status: 500 }

@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { currentUser } from "@clerk/nextjs/server";
 import { pool } from "@/lib/db";
 
-export async function GET(req, { params }) {
+export async function GET(req, context) {
   try {
     const user = await currentUser();
 
@@ -13,7 +13,8 @@ export async function GET(req, { params }) {
       );
     }
 
-    const noteId = Number(params.id);
+    // ✅ Safe params
+    const noteId = Number(context?.params?.id);
 
     if (!noteId) {
       return NextResponse.json(
@@ -22,10 +23,9 @@ export async function GET(req, { params }) {
       );
     }
 
+    // 👨‍🎓 Get student
     const studentRes = await pool.query(
-      `SELECT institute_id, course
-       FROM students
-       WHERE clerk_id = $1`,
+      `SELECT institute_id, course FROM students WHERE clerk_id = $1`,
       [user.id]
     );
 
@@ -37,8 +37,24 @@ export async function GET(req, { params }) {
     }
 
     let { institute_id, course } = studentRes.rows[0];
+
+    if (!institute_id) {
+      return NextResponse.json(
+        { error: "Student institute not set" },
+        { status: 400 }
+      );
+    }
+
+    if (!course) {
+      return NextResponse.json(
+        { error: "Student course not set" },
+        { status: 400 }
+      );
+    }
+
     course = course.trim();
 
+    // 📄 Fetch single note
     const noteRes = await pool.query(
       `SELECT id, title, description, file_url, file_type
        FROM notes
@@ -50,7 +66,7 @@ export async function GET(req, { params }) {
 
     if (noteRes.rows.length === 0) {
       return NextResponse.json(
-        { error: "Access denied" },
+        { error: "Access denied or note not found" },
         { status: 403 }
       );
     }

@@ -1,5 +1,9 @@
 export function calculateStatus(score) {
-  if (score >= 70) return "Strong";
-  if (score >= 50) return "Average";
-  return "Weak";
+  const rules = [
+    { min: 70, label: "Strong" },
+    { min: 50, label: "Average" },
+    { min: 0, label: "Weak" },
+  ];
+
+  return rules.find(rule => score >= rule.min).label;
 }

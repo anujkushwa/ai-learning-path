@@ -10,7 +10,6 @@ import StudentFooter from "@/components/StudentFooter";
 import { BookOpen, TrendingUp, AlertTriangle } from "lucide-react";
 
 export default function StudentDashboard() {
-
   const { user, isLoaded } = useUser();
   const router = useRouter();
 
@@ -31,12 +30,10 @@ export default function StudentDashboard() {
 
   /* ---------- LOAD DASHBOARD ---------- */
   useEffect(() => {
-
     if (!isLoaded) return;
 
     const loadDashboard = async () => {
       try {
-
         const res = await fetch("/api/student/dashboard", {
           cache: "no-store",
         });
@@ -58,10 +55,7 @@ export default function StudentDashboard() {
             }))
           : [];
 
-        console.log("📊 Student Results:", safeData);
-
         setResults(safeData);
-
       } catch (err) {
         console.error("Dashboard error:", err);
         setResults([]);
@@ -71,12 +65,10 @@ export default function StudentDashboard() {
     };
 
     loadDashboard();
-
   }, [isLoaded]);
 
   /* ---------- AUTO REFRESH (SAFE) ---------- */
   useEffect(() => {
-
     if (!isLoaded) return;
 
     const interval = setInterval(async () => {
@@ -96,22 +88,18 @@ export default function StudentDashboard() {
           : [];
 
         setResults(safeData);
-
       } catch (err) {
         console.warn("Auto refresh failed");
       }
     }, 5000);
 
     return () => clearInterval(interval);
-
   }, [isLoaded]);
 
   /* ---------- LOAD AI SUGGESTIONS ---------- */
   useEffect(() => {
-
     const loadSuggestions = async () => {
       try {
-
         const res = await fetch("/api/student/recommendations", {
           cache: "no-store",
         });
@@ -121,14 +109,12 @@ export default function StudentDashboard() {
         const data = await res.json();
 
         setRecommendation(data || null);
-
       } catch (err) {
         console.warn("Recommendation API error");
       }
     };
 
     loadSuggestions();
-
   }, []);
 
   /* ---------- CALCULATIONS ---------- */
@@ -138,15 +124,14 @@ export default function StudentDashboard() {
   const averageScore =
     testsTaken === 0
       ? 0
-      : Math.round(
-          results.reduce((sum, r) => sum + r.score, 0) /
-            testsTaken
-        );
+      : Math.round(results.reduce((sum, r) => sum + r.score, 0) / testsTaken);
 
-  let weakTopic = "N/A";
+  let weakTopic = "No Weak Topics 🎉";
 
-  if (results.length > 0) {
-    const sorted = [...results].sort((a, b) => a.score - b.score);
+  const weakOnly = results.filter((r) => r.score < 40);
+
+  if (weakOnly.length > 0) {
+    const sorted = [...weakOnly].sort((a, b) => a.score - b.score);
     weakTopic = sorted[0]?.topic || "N/A";
   }
 
@@ -155,13 +140,11 @@ export default function StudentDashboard() {
       <StudentNavbar />
 
       <main className="relative pt-24 min-h-screen px-6 overflow-hidden">
-
         {/* BACKGROUND */}
         <div className="absolute -top-32 -left-32 w-[400px] h-[400px] bg-purple-300 rounded-full blur-[120px] opacity-40"></div>
         <div className="absolute top-1/2 -right-32 w-[400px] h-[400px] bg-indigo-300 rounded-full blur-[120px] opacity-40"></div>
 
         <div className="relative max-w-7xl mx-auto">
-
           <h1 className="text-3xl font-semibold text-gray-800 mb-8">
             Student Dashboard
           </h1>
@@ -170,10 +153,8 @@ export default function StudentDashboard() {
             <p>Loading dashboard...</p>
           ) : (
             <>
-
               {/* STATS */}
               <div className="grid md:grid-cols-3 gap-6 mb-12">
-
                 <StatCard
                   icon={<BookOpen size={22} />}
                   title="Tests Attempted"
@@ -191,30 +172,23 @@ export default function StudentDashboard() {
                   title="Weak Topic"
                   value={weakTopic}
                 />
-
               </div>
 
               {/* RECENT TESTS */}
               <div className="bg-white/70 backdrop-blur-xl rounded-xl shadow-lg p-6 mb-12 border border-white">
-
                 <h2 className="text-lg font-semibold text-gray-800 mb-6">
                   Recent Tests
                 </h2>
 
                 {results.length === 0 ? (
-                  <p className="text-gray-500">
-                    No tests attempted yet.
-                  </p>
+                  <p className="text-gray-500">No tests attempted yet.</p>
                 ) : (
                   <div className="divide-y">
-
                     {results.slice(0, 5).map((test, i) => (
-
                       <div
                         key={i}
                         className="flex justify-between items-center py-4"
                       >
-
                         <p className="font-medium text-gray-800">
                           {test.topic}
                         </p>
@@ -225,55 +199,69 @@ export default function StudentDashboard() {
                             test.score < 40
                               ? "bg-red-100 text-red-700"
                               : test.score < 70
-                              ? "bg-yellow-100 text-yellow-700"
-                              : "bg-green-100 text-green-700"
+                                ? "bg-yellow-100 text-yellow-700"
+                                : "bg-green-100 text-green-700"
                           }`}
                         >
                           {test.score}%
                         </span>
-
                       </div>
-
                     ))}
-
                   </div>
                 )}
-
               </div>
 
               {/* AI SUGGESTION */}
-              {recommendation?.weakTopic && (
 
-                <div className="bg-white rounded-xl shadow-lg p-6 mb-12">
+              {(() => {
+                const weakOnly = results.filter((r) => r.score < 40);
 
-                  <h2 className="text-lg font-semibold mb-4">
-                    AI Learning Suggestion
-                  </h2>
+                if (weakOnly.length === 0) {
+                  return (
+                    <div className="bg-white rounded-xl shadow-lg p-6 mb-12">
+                      <h2 className="text-lg font-semibold mb-4">
+                        AI Learning Suggestion
+                      </h2>
 
-                  <p className="mb-3">
-                    Weak Topic:
-                    <span className="ml-2 font-semibold text-red-600">
-                      {recommendation.weakTopic}
-                    </span>
-                  </p>
+                      <p className="text-green-600 font-medium">
+                        You're doing great! No weak topics 🎉
+                      </p>
+                    </div>
+                  );
+                }
 
-                  {recommendation.video && (
-                    <a
-                      href={recommendation.video}
-                      target="_blank"
-                      className="text-indigo-600 underline"
-                    >
-                      Watch Recommended Video
-                    </a>
-                  )}
+                const weakTopic = [...weakOnly].sort(
+                  (a, b) => a.score - b.score,
+                )[0].topic;
 
-                </div>
+                return (
+                  <div className="bg-white rounded-xl shadow-lg p-6 mb-12">
+                    <h2 className="text-lg font-semibold mb-4">
+                      AI Learning Suggestion
+                    </h2>
 
-              )}
+                    <p className="mb-3">
+                      Weak Topic:
+                      <span className="ml-2 font-semibold text-red-600">
+                        {weakTopic}
+                      </span>
+                    </p>
+
+                    {recommendation?.video && (
+                      <a
+                        href={recommendation.video}
+                        target="_blank"
+                        className="text-indigo-600 underline"
+                      >
+                        Watch Recommended Video
+                      </a>
+                    )}
+                  </div>
+                );
+              })()}
 
               {/* ACTION BUTTONS */}
               <div className="flex gap-4 mb-16">
-
                 <a
                   href="/student/test"
                   className="px-6 py-3 bg-gradient-to-r from-indigo-600 to-purple-600 text-white rounded-lg font-medium shadow-lg hover:scale-105 transition"
@@ -287,12 +275,9 @@ export default function StudentDashboard() {
                 >
                   View Notes
                 </a>
-
               </div>
-
             </>
           )}
-
         </div>
       </main>
 

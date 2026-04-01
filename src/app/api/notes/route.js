@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { currentUser } from "@clerk/nextjs/server";
 import { pool } from "@/lib/db";
 
-export async function GET(req, { params }) {
+export async function GET() {
   try {
     const user = await currentUser();
 
@@ -13,20 +13,9 @@ export async function GET(req, { params }) {
       );
     }
 
-    const noteId = Number(params.id);
-
-    if (!noteId) {
-      return NextResponse.json(
-        { error: "Invalid note ID" },
-        { status: 400 }
-      );
-    }
-
-    // 👨‍🎓 Get student data
+    // 👨‍🎓 Get student
     const studentRes = await pool.query(
-      `SELECT institute_id, course
-       FROM students
-       WHERE clerk_id = $1`,
+      `SELECT institute_id, course FROM students WHERE clerk_id = $1`,
       [user.id]
     );
 
@@ -39,30 +28,37 @@ export async function GET(req, { params }) {
 
     let { institute_id, course } = studentRes.rows[0];
 
-    // ✅ Normalize course
-    course = course.trim();
-
-    // 🔒 Secure fetch
-    const noteRes = await pool.query(
-      `SELECT id, title, description, file_url, file_type
-       FROM notes
-       WHERE id = $1
-       AND institute_id = $2
-       AND LOWER(TRIM(course)) = LOWER(TRIM($3))`,
-      [noteId, institute_id, course]
-    );
-
-    if (noteRes.rows.length === 0) {
+    // ✅ Safety checks
+    if (!institute_id) {
       return NextResponse.json(
-        { error: "Access denied" },
-        { status: 403 }
+        { error: "Student institute not set" },
+        { status: 400 }
       );
     }
 
-    return NextResponse.json(noteRes.rows[0]);
+    if (!course) {
+      return NextResponse.json(
+        { error: "Student course not set" },
+        { status: 400 }
+      );
+    }
+
+    course = course.trim();
+
+    // 📄 Fetch notes
+    const notesRes = await pool.query(
+      `SELECT id, title, description, file_url, file_type
+       FROM notes
+       WHERE institute_id = $1
+       AND LOWER(TRIM(course)) = LOWER(TRIM($2))
+       ORDER BY id DESC`,
+      [institute_id, course]
+    );
+
+    return NextResponse.json(notesRes.rows);
 
   } catch (error) {
-    console.error("❌ NOTE FETCH ERROR:", error);
+    console.error("❌ NOTES FETCH ERROR:", error);
 
     return NextResponse.json(
       { error: "Server error" },

@@ -3,7 +3,7 @@ import { pool } from "@/lib/db";
 import { currentUser } from "@clerk/nextjs/server";
 import { v2 as cloudinary } from "cloudinary";
 
-// ✅ Cloudinary config
+// Cloudinary config
 cloudinary.config({
   cloud_name: process.env.CLOUD_NAME,
   api_key: process.env.CLOUD_API_KEY,
@@ -34,7 +34,6 @@ export async function POST(req) {
       );
     }
 
-    // 📁 Allowed types
     const allowedTypes = [
       "application/pdf",
       "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
@@ -57,11 +56,9 @@ export async function POST(req) {
       );
     }
 
-    // 👨‍🏫 Teacher data
+    // 👨‍🏫 Get teacher
     const teacherRes = await pool.query(
-      `SELECT institute_id, course
-       FROM teachers
-       WHERE clerk_id = $1`,
+      `SELECT institute_id, course FROM teachers WHERE clerk_id = $1`,
       [user.id]
     );
 
@@ -73,9 +70,17 @@ export async function POST(req) {
     }
 
     let { institute_id, course } = teacherRes.rows[0];
+
+    if (!institute_id || !course) {
+      return NextResponse.json(
+        { error: "Teacher institute or course missing" },
+        { status: 400 }
+      );
+    }
+
     course = course.trim();
 
-    // 🔥 Upload to Cloudinary
+    // 📤 Upload to Cloudinary
     const bytes = await file.arrayBuffer();
     const buffer = Buffer.from(bytes);
 
@@ -91,7 +96,7 @@ export async function POST(req) {
 
     const fileUrl = uploadRes.secure_url;
 
-    // 💾 Save in DB
+    // 💾 Save note
     await pool.query(
       `INSERT INTO notes
        (title, description, file_url, file_type, institute_id, course)

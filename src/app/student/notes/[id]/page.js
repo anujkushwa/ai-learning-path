@@ -1,6 +1,6 @@
 "use client";
 
-import { useParams, useSearchParams } from "next/navigation";
+import { useParams } from "next/navigation";
 import { useEffect, useState } from "react";
 import StudentNavbar from "@/components/StudentNavbar";
 import StudentFooter from "@/components/StudentFooter";
@@ -9,10 +9,7 @@ import { Download } from "lucide-react";
 export default function NoteDetail() {
 
   const params = useParams();
-  const searchParams = useSearchParams();
-
   const id = params?.id;
-  const studentId = searchParams.get("studentId") || 1;
 
   const [note, setNote] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -21,21 +18,30 @@ export default function NoteDetail() {
 
     if (!id) return;
 
-    fetch(`/api/notes/${id}?studentId=${studentId}`)
-      .then(res => {
-        if (!res.ok) throw new Error("Failed to load note");
-        return res.json();
-      })
-      .then(data => {
-        setNote(data);
-        setLoading(false);
-      })
-      .catch(err => {
-        console.error("NOTE FETCH ERROR:", err);
-        setLoading(false);
-      });
+    const loadNote = async () => {
+      try {
+        const res = await fetch(`/api/notes/${id}`, {
+          cache: "no-store",
+        });
 
-  }, [id, studentId]);
+        if (!res.ok) {
+          throw new Error("Failed to load note");
+        }
+
+        const data = await res.json();
+
+        setNote(data);
+      } catch (err) {
+        console.error("NOTE FETCH ERROR:", err);
+        setNote(null);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    loadNote();
+
+  }, [id]);
 
   if (loading) {
     return (

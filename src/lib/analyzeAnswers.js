@@ -1,9 +1,8 @@
 export function analyzeAnswers(questions, answers) {
   const topicMap = {};
 
-  questions.forEach((q) => {
-    const topic = q.topic;
-
+  // Step 1: Build topic stats
+  questions.forEach(({ id, topic, correctAnswer }) => {
     if (!topicMap[topic]) {
       topicMap[topic] = {
         total: 0,
@@ -13,27 +12,24 @@ export function analyzeAnswers(questions, answers) {
       };
     }
 
-    topicMap[topic].total++;
+    const isCorrect = answers[id] === correctAnswer;
 
-    if (answers[q.id] === q.correctAnswer) {
-      topicMap[topic].correct++;
-    } else {
-      topicMap[topic].wrong++;
-    }
+    topicMap[topic].total++;
+    topicMap[topic][isCorrect ? "correct" : "wrong"]++;
   });
 
-  // decide topic status
-  Object.keys(topicMap).forEach((topic) => {
-    const { correct, total } = topicMap[topic];
+  // Step 2: Assign status
+  Object.entries(topicMap).forEach(([topic, data]) => {
+    const { correct, total } = data;
     const accuracy = correct / total;
 
-    if (accuracy >= 0.7) {
-      topicMap[topic].status = "strong";
-    } else if (accuracy >= 0.4) {
-      topicMap[topic].status = "average";
-    } else {
-      topicMap[topic].status = "weak";
-    }
+    const rules = [
+      { min: 0.7, label: "strong" },
+      { min: 0.4, label: "average" },
+      { min: 0, label: "weak" },
+    ];
+
+    data.status = rules.find(rule => accuracy >= rule.min).label;
   });
 
   return topicMap;
