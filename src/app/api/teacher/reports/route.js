@@ -33,21 +33,20 @@ export async function GET() {
 
     const { institute_id, course } = teacherRes.rows[0];
 
-    /* ---------- STUDENTS ---------- */
+    /* ---------- STUDENTS (FIXED) ---------- */
 
     const studentsRes = await pool.query(
       `
       SELECT id, name
       FROM students
-      WHERE institute_id = $1
-      AND LOWER(TRIM(course)) = LOWER(TRIM($2))
+      WHERE LOWER(TRIM(course)) = LOWER(TRIM($1))
       `,
-      [institute_id, course]
+      [course]
     );
 
     const students = studentsRes.rows;
 
-    /* ---------- RESULTS ---------- */
+    /* ---------- RESULTS (FIXED) ---------- */
 
     const resultsRes = await pool.query(
       `
@@ -59,63 +58,95 @@ export async function GET() {
       FROM test_results r
       JOIN students s ON s.id = r.student_id
       JOIN tests t ON t.id = r.test_id
-      WHERE s.institute_id = $1
-      AND LOWER(TRIM(s.course)) = LOWER(TRIM($2))
+      WHERE LOWER(TRIM(s.course)) = LOWER(TRIM($1))
       `,
-      [institute_id, course]
+      [course]
     );
 
     const results = resultsRes.rows;
+
+    /* ---------- EDGE CASE ---------- */
+
+    if (results.length === 0) {
+      return NextResponse.json({
+        summary: {
+          totalStudents: students.length,
+          totalTopics: 0,
+          weakestTopic: "N/A",
+        },
+        topicReport: [],
+        studentReport: [],
+      });
+    }
 
     /* ---------- TOPIC REPORT ---------- */
 
     const topicMap = {};
 
     results.forEach((r) => {
-      if (!topicMap[r.topic]) {
-        topicMap[r.topic] = [];
+      const topic = r.topic?.trim() || "Unknown";
+
+      if (!topicMap[topic]) {
+        topicMap[topic] = [];
       }
 
-      topicMap[r.topic].push(Number(r.score));
+      topicMap[topic].push(Number(r.score));
     });
 
-    const topicReport = Object.entries(topicMap).map(([topic, scores]) => {
+    const topicReport = Object.entries(topicMap).map(
+      ([topic, scores]) => {
+        const avg =
+          scores.reduce((a, b) => a + b, 0) / scores.length;
 
-      const avg =
-        scores.reduce((a, b) => a + b, 0) / scores.length;
+        let status = "Strong";
 
-      let status = "Strong";
+        if (avg < 40) status = "Weak";
+        else if (avg < 70) status = "Average";
 
-      if (avg < 40) status = "Weak";
-      else if (avg < 70) status = "Average";
-
-      return {
-        topic,
-        avgScore: Math.round(avg),
-        status
-      };
-
-    });
+        return {
+          topic,
+          avgScore: Math.round(avg),
+          status,
+          totalAttempts: scores.length,
+        };
+      }
+    );
 
     /* ---------- STUDENT REPORT ---------- */
 
     const studentMap = {};
 
     results.forEach((r) => {
-
       if (!studentMap[r.student_id]) {
         studentMap[r.student_id] = {
           id: r.student_id,
           name: r.name,
-          topics: {}
+          topics: {},
+          totalScore: 0,
+          count: 0,
         };
       }
 
       studentMap[r.student_id].topics[r.topic] = r.score;
-
+      studentMap[r.student_id].totalScore += Number(r.score);
+      studentMap[r.student_id].count += 1;
     });
 
-    const studentReport = Object.values(studentMap);
+    const studentReport = Object.values(studentMap).map((s) => {
+      const avg = s.totalScore / s.count;
+
+      let level = "Strong";
+      if (avg < 40) level = "Weak";
+      else if (avg < 70) level = "Average";
+
+      return {
+        id: s.id,
+        name: s.name,
+        topics: s.topics,
+        avgScore: Math.round(avg),
+        level,
+      };
+    });
 
     /* ---------- SUMMARY ---------- */
 
@@ -136,10 +167,10 @@ export async function GET() {
       summary: {
         totalStudents,
         totalTopics,
-        weakestTopic
+        weakestTopic,
       },
       topicReport,
-      studentReport
+      studentReport,
     });
 
   } catch (error) {

@@ -188,7 +188,6 @@ export default function TeacherReports() {
 
                   </tr>
                 </thead>
-
                 <tbody>
                   {reportData.studentReport.map((s) => (
                     <tr
@@ -239,9 +238,7 @@ export default function TeacherReports() {
                   </div>
                 )
               )}
-
             </div>
-
             <button
               onClick={() => setSelectedStudent(null)}
               className="mt-6 w-full py-2 bg-indigo-600 text-white rounded-lg"
@@ -271,7 +268,6 @@ function SummaryCard({ icon, title, value }) {
         <p className="text-sm text-gray-500">{title}</p>
         <p className="text-2xl font-semibold text-gray-800">{value}</p>
       </div>
-
     </div>
   );
 }
