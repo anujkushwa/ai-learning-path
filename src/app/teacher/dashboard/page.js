@@ -54,43 +54,48 @@ export default function TeacherDashboard() {
 
 
   /* ---------------- FETCH ANALYTICS ---------------- */
-  useEffect(() => {
-    const loadAnalytics = async () => {
-      try {
-        const res = await fetch("/api/teacher/analytics", {
-          cache: "no-store",
-        });
-                
-        if (!res.ok) {
-          console.error("Analytics API failed");
-          setAnalysis([]);
-          return;
-        }
-        const data = await res.json();
-        console.log("API RESPONSE:", data);
+ useEffect(() => {
+  const loadAnalytics = async () => {
+    try {
+      setLoading(true);
 
-        const formatted = Array.isArray(data.data)
-          ? data.data.map((item) => ({
-              topic: item.title || "Unknown",
-              avg: Number(item.avg_score || 0),
-              status: getStatus(Number(item.avg_score || 0)),
-            }))
-          : [];
+      const res = await fetch("/api/teacher/analytics", {
+        method: "GET",
+        cache: "no-store",
+      });
 
-
-
-
-          
-        setAnalysis(formatted);
-      } catch (err) {
-        console.error("API Error:", err);
-      } finally {
-        setLoading(false);
+      // ✅ Better error handling
+      if (!res.ok) {
+        const errorText = await res.text(); // 👈 actual error pakdo
+        console.error("❌ Analytics API failed:", res.status, errorText);
+        setAnalysis([]);
+        return;
       }
-    };
 
-    loadAnalytics();
-  }, []);
+      const data = await res.json();
+      console.log("✅ API RESPONSE:", data);
+
+      // ✅ Safe parsing
+      const formatted = Array.isArray(data?.data)
+        ? data.data.map((item) => ({
+            topic: item?.title || "Unknown",
+            avg: Number(item?.avg_score ?? 0),
+            status: getStatus(Number(item?.avg_score ?? 0)),
+          }))
+        : [];
+
+      setAnalysis(formatted);
+
+    } catch (err) {
+      console.error("🚨 API Error:", err.message || err);
+      setAnalysis([]);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  loadAnalytics();
+}, []);
 
   /* ---------------- LOADING ---------------- */
   if (loading) {

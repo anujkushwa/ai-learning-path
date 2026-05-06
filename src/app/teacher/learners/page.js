@@ -49,35 +49,45 @@ export default function LearnerHub() {
 
   // 📤 Upload Notes
   async function handleUpload() {
-    if (!title || !description || !file) {
-      alert("All fields required");
-      return;
-    }
-
-    const formData = new FormData();
-    formData.append("title", title);
-    formData.append("description", description);
-    formData.append("file", file);
-
-    try {
-      const res = await fetch("/api/notes/upload", {
-        method: "POST",
-        body: formData,
-      });
-
-      if (res.ok) {
-        alert("Notes uploaded successfully");
-        setTitle("");
-        setDescription("");
-        setFile(null);
-      } else {
-        alert("Upload failed");
-      }
-    } catch (error) {
-      console.error(error);
-      alert("Something went wrong");
-    }
+  if (!title || !description || !file) {
+    alert("All fields required");
+    return;
   }
+
+  console.log("FILE DEBUG:", file); // 👈 debug
+
+  const formData = new FormData();
+  formData.append("title", title.trim());
+  formData.append("description", description.trim());
+  formData.append("file", file);
+
+  try {
+    const res = await fetch("/api/notes/upload", {
+      method: "POST",
+      body: formData,
+    });
+
+    const data = await res.json();
+    console.log("UPLOAD RESPONSE:", data);
+
+    if (res.ok) {
+      alert("Notes uploaded successfully");
+
+      setTitle("");
+      setDescription("");
+      setFile(null);
+
+      // ✅ input reset fix
+      document.querySelector('input[type="file"]').value = "";
+    } else {
+      alert(data.error || "Upload failed");
+    }
+
+  } catch (error) {
+    console.error(error);
+    alert("Something went wrong");
+  }
+}
 
   return (
     <>

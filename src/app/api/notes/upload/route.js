@@ -3,7 +3,7 @@ import { pool } from "@/lib/db";
 import { currentUser } from "@clerk/nextjs/server";
 import { v2 as cloudinary } from "cloudinary";
 
-// Cloudinary config
+// ✅ Cloudinary config
 cloudinary.config({
   cloud_name: process.env.CLOUD_NAME,
   api_key: process.env.CLOUD_API_KEY,
@@ -27,36 +27,57 @@ export async function POST(req) {
     const description = formData.get("description");
     const file = formData.get("file");
 
+    // ✅ Debug logs (important)
+    console.log("TITLE:", title);
+    console.log("DESCRIPTION:", description);
+    console.log("FILE:", file);
+    console.log("FILE TYPE:", file?.type);
+    console.log("FILE NAME:", file?.name);
+
+    // ✅ Basic validation
     if (!title || !description || !file) {
       return NextResponse.json(
-        { error: "All fields required" },
+        {
+          error: "All fields required",
+          debug: {
+            title,
+            description,
+            hasFile: !!file,
+          },
+        },
         { status: 400 }
       );
     }
 
-    const allowedTypes = [
-      "application/pdf",
-      "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
-      "application/msword",
-      "application/vnd.ms-powerpoint",
-      "application/vnd.openxmlformats-officedocument.presentationml.presentation",
-    ];
+    // ✅ FIX: extension-based validation (file.type unreliable hota hai)
+    const fileName = file.name.toLowerCase();
 
-    if (!allowedTypes.includes(file.type)) {
+    const isValidFile =
+      fileName.endsWith(".pdf") ||
+      fileName.endsWith(".doc") ||
+      fileName.endsWith(".docx") ||
+      fileName.endsWith(".ppt") ||
+      fileName.endsWith(".pptx");
+
+    if (!isValidFile) {
       return NextResponse.json(
-        { error: "Only PDF, DOCX, PPT allowed" },
+        {
+          error: "Only PDF, DOC, DOCX, PPT, PPTX allowed",
+          fileName,
+        },
         { status: 400 }
       );
     }
 
+    // ✅ Size validation (10MB)
     if (file.size > 10 * 1024 * 1024) {
       return NextResponse.json(
-        { error: "Max size 10MB" },
+        { error: "Max file size is 10MB" },
         { status: 400 }
       );
     }
 
-    // 👨‍🏫 Get teacher
+    // 👨‍🏫 Get teacher data
     const teacherRes = await pool.query(
       `SELECT institute_id, course FROM teachers WHERE clerk_id = $1`,
       [user.id]
@@ -85,23 +106,35 @@ export async function POST(req) {
     const buffer = Buffer.from(bytes);
 
     const uploadRes = await new Promise((resolve, reject) => {
-      cloudinary.uploader.upload_stream(
-        { resource_type: "auto" },
-        (error, result) => {
-          if (error) reject(error);
-          else resolve(result);
-        }
-      ).end(buffer);
+      cloudinary.uploader
+        .upload_stream(
+          {
+            resource_type: "auto",
+            folder: "notes", // optional but better
+          },
+          (error, result) => {
+            if (error) reject(error);
+            else resolve(result);
+          }
+        )
+        .end(buffer);
     });
 
     const fileUrl = uploadRes.secure_url;
 
-    // 💾 Save note
+    // 💾 Save to DB
     await pool.query(
       `INSERT INTO notes
        (title, description, file_url, file_type, institute_id, course)
        VALUES ($1,$2,$3,$4,$5,$6)`,
-      [title, description, fileUrl, file.type, institute_id, course]
+      [
+        title.trim(),
+        description.trim(),
+        fileUrl,
+        file.type || "unknown",
+        institute_id,
+        course,
+      ]
     );
 
     return NextResponse.json({
@@ -114,7 +147,10 @@ export async function POST(req) {
     console.error("❌ UPLOAD ERROR:", error);
 
     return NextResponse.json(
-      { error: error.message },
+      {
+        error: "Upload failed",
+        details: error.message,
+      },
       { status: 500 }
     );
   }

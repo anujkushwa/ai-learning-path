@@ -2,7 +2,7 @@
 
 import { UserButton } from "@clerk/nextjs";
 import { useRouter, usePathname } from "next/navigation";
-import { LayoutDashboard, ClipboardList, BarChart3, Menu, X } from "lucide-react";
+import { LayoutDashboard, ClipboardList, BarChart3, Menu, X, Search } from "lucide-react"; // ✅ added Search icon
 import { useState } from "react";
 
 export default function StudentNavbar() {
@@ -68,6 +68,15 @@ export default function StudentNavbar() {
             Progress
           </button>
 
+          {/* ✅ AI SEARCH BUTTON ADDED */}
+          <button
+            onClick={() => router.push("/student/ai-search")}
+            className={navItem("/student/ai-search")}
+          >
+            <Search size={18} />
+            AI Search
+          </button>
+
         </div>
 
         {/* RIGHT SECTION */}
@@ -127,6 +136,18 @@ export default function StudentNavbar() {
             >
               <BarChart3 size={18} />
               Progress
+            </button>
+
+            {/* ✅ AI SEARCH MOBILE BUTTON */}
+            <button
+              onClick={() => {
+                router.push("/student/ai-search");
+                setMobileOpen(false);
+              }}
+              className={mobileNavItem("/student/ai-search")}
+            >
+              <Search size={18} />
+              AI Search
             </button>
 
           </div>
